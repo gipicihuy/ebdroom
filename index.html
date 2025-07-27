@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Eberardos Room Chat</title>
   <link rel="icon" href="https://qu.ax/lElwH.jpg" type="image/jpeg" />
+
+  <!-- Meta thumbnail -->
   <meta property="og:title" content="Eberardos Room Chat" />
   <meta property="og:description" content="Join sini bro!" />
   <meta property="og:image" content="https://qu.ax/lElwH.jpg" />
@@ -14,6 +16,8 @@
   <meta name="twitter:title" content="Chat Komunitas" />
   <meta name="twitter:description" content="Join sini bro!" />
   <meta name="twitter:image" content="https://qu.ax/lElwH.jpg" />
+
+  <!-- Font & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -87,14 +91,12 @@
       margin-bottom: 4px;
     }
 
-    .reply-box {
-      font-size: 0.8rem;
-      background:#e8f0ff;
-      padding:4px 8px;
-      border-left:3px solid #007bff;
-      margin-bottom:5px;
-      color: #444;
-      margin-left: 10px;
+    .message .timestamp {
+      font-size: 0.75rem;
+      color: #888;
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
     }
 
     .input-area {
@@ -150,8 +152,7 @@
   </div>
 </div>
 
-<!-- (bagian HEAD & CSS tidak berubah) -->
-...
+<!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
   import {
@@ -171,10 +172,12 @@
     appId: "1:686847521502:web:89ea20aa523da58e85484f"
   };
 
+  // Inisialisasi Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
 
+  // Paksa isi nama user
   let userName = localStorage.getItem("chatUserName");
   while (!userName || userName.trim() === "" || userName === "Anonymous") {
     alert("Nama wajib diisi untuk ikut chat.");
@@ -185,105 +188,46 @@
   const messagesDiv = document.getElementById("messages");
   const messageInput = document.getElementById("messageInput");
 
-  let replyingTo = null;
-
+  // Auto-resize input
   messageInput.addEventListener("input", () => {
     messageInput.style.height = "auto";
     messageInput.style.height = messageInput.scrollHeight + "px";
   });
 
-  window.sendMessage = function () {
-    const text = messageInput.value.trim();
-    if (text === "") return;
-
-    const safeText = text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
-    const data = {
-      user: userName,
-      text: safeText,
-      timestamp: Date.now()
-    };
-
-    if (replyingTo) {
-      data.replyTo = {
-        user: replyingTo.user,
-        text: replyingTo.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]'),
-        timestamp: replyingTo.timestamp
-      };
-    }
-
-    push(messagesRef, data);
-    messageInput.value = "";
-    messageInput.style.height = "40px";
-    messageInput.placeholder = "Ketik pesan...";
-    replyingTo = null;
-  };
-
-  messagesDiv.addEventListener("click", (e) => {
-    const msgDiv = e.target.closest(".message");
-    if (!msgDiv) return;
-
-    const user = msgDiv.dataset.user;
-    const text = msgDiv.dataset.text;
-    const timestamp = msgDiv.dataset.timestamp;
-
-    replyingTo = { user, text, timestamp };
-    messageInput.placeholder = `Balas ke ${user}: "${text}"`;
-    messageInput.focus();
-  });
-
-  function scrollToMessage(timestamp) {
-    const target = document.getElementById(`msg-${timestamp}`);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.style.backgroundColor = "#ffffd5";
-      setTimeout(() => {
-        target.style.backgroundColor = "";
-      }, 1500);
-    }
-  }
-
+  // Tampilkan pesan baru
   onChildAdded(messagesRef, (data) => {
     const msg = data.val();
+
+    // Blok iframe
     const safeText = msg.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
+
     const msgDiv = document.createElement("div");
     msgDiv.className = "message";
-    msgDiv.dataset.user = msg.user;
-    msgDiv.dataset.text = msg.text;
-    msgDiv.dataset.timestamp = msg.timestamp;
-    msgDiv.id = `msg-${msg.timestamp}`;
-
-    let replyHtml = "";
-    if (msg.replyTo) {
-      const safeReply = msg.replyTo.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
-      replyHtml = `
-        <div class="reply-box" onclick="scrollToMessage(${msg.replyTo.timestamp})" style="cursor:pointer;">
-          <b>${msg.replyTo.user}</b>: "${safeReply}"
-        </div>
-      `;
-    }
-
     const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit"
     });
-
     msgDiv.innerHTML = `
       <div class="user">${msg.user}</div>
-      ${replyHtml}
       <div>${safeText}</div>
       <div style="font-size: 0.75rem; color: gray; text-align: right;">${time}</div>
     `;
-
     messagesDiv.appendChild(msgDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 
-  window.autoResize = function (el) {
-    el.style.height = "auto";
-    el.style.height = el.scrollHeight + "px";
+  // Fungsi kirim pesan
+  window.sendMessage = function () {
+    const text = messageInput.value.trim();
+    if (text === "") return;
+    push(messagesRef, {
+      user: userName,
+      text,
+      timestamp: Date.now()
+    });
+    messageInput.value = "";
+    messageInput.style.height = "40px"; // reset height
   };
-
-  window.scrollToMessage = scrollToMessage;
 </script>
 
 </body>
