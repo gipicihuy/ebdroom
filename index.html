@@ -279,10 +279,22 @@
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
 
+  // Fungsi buat amankan teks dari XSS
   function sanitize(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // Fungsi untuk warna random yang konsisten
+  function stringToColor(str) {
+    if (!str) return "#000"; // fallback hitam
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 65%, 50%)`;
   }
 
   let userName = localStorage.getItem("chatUserName");
@@ -292,7 +304,7 @@
       alert("Nama diperlukan untuk lanjut.");
       continue;
     }
-    userName = input;
+    userName = input.trim();
   }
   localStorage.setItem("chatUserName", userName);
 
@@ -322,19 +334,23 @@
 
   onChildAdded(messagesRef, (data) => {
     const msg = data.val();
+    if (!msg || !msg.text || !msg.user) return;
+
     const safeText = sanitize(msg.text);
     const msgDiv = document.createElement("div");
-msgDiv.className = "message";
-if (msg.user === userName) {
-  msgDiv.classList.add("mine");
-}
+    msgDiv.className = "message";
+    if (msg.user === userName) {
+      msgDiv.classList.add("mine");
+    }
 
     const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
       hour: "2-digit", minute: "2-digit"
     });
 
+    const userColor = stringToColor(msg.user);
+
     msgDiv.innerHTML = `
-      <div class="user"><i class="fas fa-user-circle"></i> ${sanitize(msg.user)}</div>
+      <div class="user" style="color: ${userColor};"><i class="fas fa-user-circle"></i> ${sanitize(msg.user)}</div>
       ${msg.replyTo ? `<div style="font-size: 0.85rem; color: gray; background: #f0f0f0; padding: 5px; border-left: 3px solid #888; margin-bottom: 4px;">${sanitize(msg.replyTo)}</div>` : ""}
       <div>${safeText}</div>
       <div class="timestamp">${time}</div>
@@ -350,10 +366,11 @@ if (msg.user === userName) {
     });
 
     messagesDiv.appendChild(msgDiv);
-    if (scrollBtn.classList.contains("visible") === false) {
+    if (!scrollBtn.classList.contains("visible")) {
       scrollToBottom();
     }
 
+    // batasi jumlah pesan jika lebih dari 100
     if (messagesDiv.children.length > 100) {
       messagesDiv.removeChild(messagesDiv.firstChild);
     }
@@ -365,6 +382,7 @@ if (msg.user === userName) {
 
   window.sendMessage = function () {
     if (sending) return;
+
     const text = messageInput.value.trim();
     if (text === "") return;
 
