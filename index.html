@@ -85,9 +85,9 @@
 
     .message {
       background: #ffffff;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
       padding: 12px 16px;
       border-radius: 10px;
       max-width: 75%;
@@ -188,12 +188,6 @@
       background: #111827;
     }
 
-      .message.mine {
-  align-self: flex-end;
-  background: #dcf8c6;
-  text-align: right;
-}
-
     .scroll-button {
       position: fixed;
       bottom: 160px;
@@ -279,16 +273,14 @@
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
 
-  // Fungsi buat amankan teks dari XSS
   function sanitize(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   }
 
-  // Fungsi untuk warna random yang konsisten
   function stringToColor(str) {
-    if (!str) return "#000"; // fallback hitam
+    if (!str) return "#000";
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -314,6 +306,7 @@
 
   let replyTo = null;
   let sending = false;
+  let isUserAtBottom = true;
 
   messageInput.addEventListener("input", () => {
     messageInput.style.height = "auto";
@@ -329,6 +322,7 @@
 
   messagesDiv.addEventListener("scroll", () => {
     const nearBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight < 150;
+    isUserAtBottom = nearBottom;
     scrollBtn.classList.toggle("visible", !nearBottom);
   });
 
@@ -366,11 +360,11 @@
     });
 
     messagesDiv.appendChild(msgDiv);
-    if (!scrollBtn.classList.contains("visible")) {
+
+    if (isUserAtBottom) {
       scrollToBottom();
     }
 
-    // batasi jumlah pesan jika lebih dari 100
     if (messagesDiv.children.length > 100) {
       messagesDiv.removeChild(messagesDiv.firstChild);
     }
@@ -401,6 +395,10 @@
     messageInput.placeholder = "Ketik pesan...";
     replyTo = null;
     document.getElementById("replyPreview").style.display = "none";
+
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   };
 
   window.cancelReply = function () {
