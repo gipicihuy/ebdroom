@@ -188,6 +188,12 @@
       background: #111827;
     }
 
+      .message.mine {
+  align-self: flex-end;
+  background: #dcf8c6;
+  text-align: right;
+}
+
     .scroll-button {
       position: fixed;
       bottom: 160px;
@@ -318,7 +324,10 @@
     const msg = data.val();
     const safeText = sanitize(msg.text);
     const msgDiv = document.createElement("div");
-    msgDiv.className = "message";
+msgDiv.className = "message";
+if (msg.user === userName) {
+  msgDiv.classList.add("mine");
+}
 
     const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
       hour: "2-digit", minute: "2-digit"
@@ -328,7 +337,7 @@
       <div class="user"><i class="fas fa-user-circle"></i> ${sanitize(msg.user)}</div>
       ${msg.replyTo ? `<div style="font-size: 0.85rem; color: gray; background: #f0f0f0; padding: 5px; border-left: 3px solid #888; margin-bottom: 4px;">${sanitize(msg.replyTo)}</div>` : ""}
       <div>${safeText}</div>
-      <div class="timestamp"><i class="far fa-clock"></i> ${time}</div>
+      <div class="timestamp">${time}</div>
     `;
 
     msgDiv.addEventListener("click", () => {
