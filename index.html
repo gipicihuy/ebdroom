@@ -594,23 +594,24 @@
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   });
 
-  // Send message function
   window.sendMessage = function() {
-    const text = messageInput.value.trim();
-    if (text === "") return;
+  const rawText = messageInput.value.trim();
+  if (rawText === "") return;
 
-    push(messagesRef, {
-      user: userName,
-      text: text,
-      timestamp: Date.now(),
-      replyTo: replyTo
-    });
+  const safeText = sanitizeMessage(rawText); // 🛡️ dibersihkan dulu
 
-    messageInput.value = "";
-    messageInput.style.height = "80px";
-    replyTo = null;
-    replyPreview.classList.add("hidden");
-  };
+  push(messagesRef, {
+    user: userName,
+    text: safeText, // 🛡️ yang aman dikirim
+    timestamp: Date.now(),
+    replyTo: replyTo
+  });
+
+  messageInput.value = "";
+  messageInput.style.height = "80px";
+  replyTo = null;
+  replyPreview.classList.add("hidden");
+};
 
   // Cancel reply
   window.cancelReply = function() {
