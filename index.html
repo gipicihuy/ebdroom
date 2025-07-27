@@ -150,7 +150,8 @@
   </div>
 </div>
 
-<!-- Firebase SDK -->
+<!-- (bagian HEAD & CSS tidak berubah) -->
+...
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
   import {
@@ -184,25 +185,30 @@
   const messagesDiv = document.getElementById("messages");
   const messageInput = document.getElementById("messageInput");
 
+  let replyingTo = null;
+
   messageInput.addEventListener("input", () => {
     messageInput.style.height = "auto";
     messageInput.style.height = messageInput.scrollHeight + "px";
   });
 
-  let replyingTo = null;
-
   window.sendMessage = function () {
     const text = messageInput.value.trim();
     if (text === "") return;
 
+    const safeText = text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
     const data = {
       user: userName,
-      text,
+      text: safeText,
       timestamp: Date.now()
     };
 
     if (replyingTo) {
-      data.replyTo = replyingTo;
+      data.replyTo = {
+        user: replyingTo.user,
+        text: replyingTo.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]'),
+        timestamp: replyingTo.timestamp
+      };
     }
 
     push(messagesRef, data);
@@ -215,28 +221,43 @@
   messagesDiv.addEventListener("click", (e) => {
     const msgDiv = e.target.closest(".message");
     if (!msgDiv) return;
+
     const user = msgDiv.dataset.user;
     const text = msgDiv.dataset.text;
-    replyingTo = { user, text };
+    const timestamp = msgDiv.dataset.timestamp;
+
+    replyingTo = { user, text, timestamp };
     messageInput.placeholder = `Balas ke ${user}: "${text}"`;
     messageInput.focus();
   });
 
+  function scrollToMessage(timestamp) {
+    const target = document.getElementById(`msg-${timestamp}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.style.backgroundColor = "#ffffd5";
+      setTimeout(() => {
+        target.style.backgroundColor = "";
+      }, 1500);
+    }
+  }
+
   onChildAdded(messagesRef, (data) => {
     const msg = data.val();
-
     const safeText = msg.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
-
     const msgDiv = document.createElement("div");
     msgDiv.className = "message";
     msgDiv.dataset.user = msg.user;
     msgDiv.dataset.text = msg.text;
+    msgDiv.dataset.timestamp = msg.timestamp;
+    msgDiv.id = `msg-${msg.timestamp}`;
 
     let replyHtml = "";
     if (msg.replyTo) {
+      const safeReply = msg.replyTo.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
       replyHtml = `
-        <div class="reply-box">
-          <b>${msg.replyTo.user}</b>: "${msg.replyTo.text}"
+        <div class="reply-box" onclick="scrollToMessage(${msg.replyTo.timestamp})" style="cursor:pointer;">
+          <b>${msg.replyTo.user}</b>: "${safeReply}"
         </div>
       `;
     }
@@ -261,6 +282,8 @@
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
   };
+
+  window.scrollToMessage = scrollToMessage;
 </script>
 
 </body>
