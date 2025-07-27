@@ -455,13 +455,7 @@
 
   // Fungsi untuk membersihkan pesan dari tag berbahaya
   function sanitizeMessage(text) {
-    return text
-      .replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]')
-      .replace(/<script.*?>.*?<\/script>/gi, '[SCRIPT diblokir]')
-      .replace(/<object.*?>.*?<\/object>/gi, '[OBJECT diblokir]')
-      .replace(/<embed.*?>.*?<\/embed>/gi, '[EMBED diblokir]')
-      .replace(/on\w+="[^"]*"/gi, '')
-      .replace(/javascript:/gi, '');
+  return text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[error]');
   }
 
   // Toggle sidebar for mobile
@@ -598,11 +592,11 @@
   const rawText = messageInput.value.trim();
   if (rawText === "") return;
 
-  const safeText = sanitizeMessage(rawText); // 🛡️ dibersihkan dulu
+  const safeText = sanitizeMessage(rawText); // ⬅️ disaring di sini
 
   push(messagesRef, {
     user: userName,
-    text: safeText, // 🛡️ yang aman dikirim
+    text: safeText, // ⬅️ yang sudah aman
     timestamp: Date.now(),
     replyTo: replyTo
   });
