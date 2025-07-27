@@ -588,6 +588,13 @@
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   });
 
+function sanitizeUsername(name) {
+  return name.replace(/<iframe.*?>.*?<\/iframe>/gi, '[error]');
+}
+   let userName = localStorage.getItem("userName") || prompt("Masukkan nama:");
+userName = sanitizeUsername(userName);
+localStorage.setItem("userName", userName);
+   
   window.sendMessage = function() {
   const rawText = messageInput.value.trim();
   if (rawText === "") return;
