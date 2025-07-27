@@ -46,14 +46,21 @@
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
 
-    .header {
-      display: flex;
-      align-items: center;
-      background: #656464;
-      color: white;
-      padding: 15px;
-      gap: 10px;
-    }
+.header {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  z-index: 100;
+  background: #656464;
+  color: white;
+  padding: 15px;
+  gap: 10px;
+  display: flex;
+  align-items: center;
+}
 
     .header img {
       width: 40px;
@@ -135,7 +142,13 @@
 }
 
 .messages {
-  padding-bottom: 80px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 70px 15px 80px;
+  background: #f0f4f8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
     textarea {
