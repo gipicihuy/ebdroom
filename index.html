@@ -588,12 +588,36 @@
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   });
 
+function sanitizeMessage(text) {
+  return text
+    .replace(/<iframe.*?>.*?<\/iframe>/gi, '[error]')
+    .replace(/<script.*?>.*?<\/script>/gi, '[error]')
+    .replace(/<object.*?>.*?<\/object>/gi, '[error]')
+    .replace(/<embed.*?>.*?<\/embed>/gi, '[error]')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
+function sanitizeUsername(name) {
+  return name.replace(/<[^>]*>/g, '[error]');
+}
+   
 function sanitizeUsername(name) {
   return name.replace(/<iframe.*?>.*?<\/iframe>/gi, '[error]');
 }
-   let userName = localStorage.getItem("userName") || prompt("Masukkan nama:");
-userName = sanitizeUsername(userName);
-localStorage.setItem("userName", userName);
+   let userName = localStorage.getItem("chatUserName");
+
+while (!userName || userName.trim() === "" || userName === "Anonymous") {
+  const name = prompt("👋 Halo! Masukkan nama untuk bergabung dengan chat:");
+  const cleanName = sanitizeUsername(name || "");
+
+  if (cleanName && cleanName.trim() !== "" && cleanName !== "Anonymous" && cleanName !== "[error]") {
+    userName = cleanName.trim();
+    localStorage.setItem("chatUserName", userName);
+  } else {
+    alert("❌ Nama wajib diisi, tidak boleh 'Anonymous', dan tidak boleh mengandung tag HTML!");
+  }
+}
    
   window.sendMessage = function() {
   const rawText = messageInput.value.trim();
