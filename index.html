@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Community Chat Room</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f2f4f7; display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column; }
+    .chat-container { width: 95%; max-width: 500px; background: white; border-radius: 12px; box-shadow: 0 0 15px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { display: flex; align-items: center; gap: 10px; background: #005bbb; color: white; padding: 15px; }
+    .header img { width: 40px; height: 40px; border-radius: 50%; }
+    .messages { height: 400px; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #eef3f9; }
+    .message { background: white; padding: 10px 14px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .message .user { font-weight: bold; margin-bottom: 5px; color: #005bbb; }
+    .input-area { display: flex; padding: 10px; gap: 10px; border-top: 1px solid #ccc; }
+    .input-area input { flex: 1; padding: 10px; border: 1px solid #aaa; border-radius: 8px; }
+    .input-area button { padding: 10px 15px; border: none; background: #005bbb; color: white; border-radius: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="header">
+      <img src="https://qu.ax/lElwH.jpg" alt="Logo" />
+      <h3>Chat Komunitas</h3>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="Ketik pesan..." />
+      <button onclick="sendMessage()">Kirim</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBynK1eoPMjOQZAZsUxSiG7J348ENYHkNU",
+      authDomain: "chatroomebd.firebaseapp.com",
+      databaseURL: "https://chatroomebd-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "chatroomebd",
+      storageBucket: "chatroomebd.appspot.com",
+      messagingSenderId: "686847521502",
+      appId: "1:686847521502:web:89ea20aa523da58e85484f"
+    };
+
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const messagesRef = ref(db, "chat");
+
+    // Dapatkan nama user dari localStorage / prompt
+    let userName = localStorage.getItem("chatUserName");
+    if (!userName) {
+      userName = prompt("Masukkan nama kamu:");
+      if (!userName || userName.trim() === "") userName = "Anonymous";
+      localStorage.setItem("chatUserName", userName);
+    }
+
+    const messagesDiv = document.getElementById("messages");
+    const messageInput = document.getElementById("messageInput");
+
+    // Tampilkan pesan baru
+    onChildAdded(messagesRef, (data) => {
+      const msg = data.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message";
+      msgDiv.innerHTML = `<div class="user">${msg.user}</div><div>${msg.text}</div>`;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    // Kirim pesan
+    window.sendMessage = function () {
+      const text = messageInput.value.trim();
+      if (text === "") return;
+      push(messagesRef, { user: userName, text });
+      messageInput.value = "";
+    };
+  </script>
+</body>
+</html>
