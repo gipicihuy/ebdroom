@@ -31,7 +31,7 @@
 
     body {
       background: #e4ecf2;
-      height: 90vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
     }
@@ -82,6 +82,7 @@
       max-width: 75%;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       position: relative;
+      cursor: pointer;
     }
 
     .message .user {
@@ -94,9 +95,28 @@
     .message .timestamp {
       font-size: 0.75rem;
       color: #888;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    #replyPreview {
+      display: none;
+      padding: 8px;
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      font-size: 0.9rem;
+      position: relative;
+    }
+
+    #replyPreview button {
       position: absolute;
-      bottom: 5px;
+      top: 5px;
       right: 10px;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #ef4444;
+      cursor: pointer;
     }
 
     .input-area {
@@ -146,13 +166,17 @@
 
   <div class="messages" id="messages"></div>
 
+  <div id="replyPreview">
+    <b id="replyUser"></b>: <span id="replyText"></span>
+    <button onclick="cancelReply()">&times;</button>
+  </div>
+
   <div class="input-area">
     <textarea id="messageInput" placeholder="Ketik pesan..." oninput="autoResize(this)"></textarea>
     <button onclick="sendMessage()">Kirim</button>
   </div>
 </div>
 
-<!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
   import {
@@ -172,12 +196,11 @@
     appId: "1:686847521502:web:89ea20aa523da58e85484f"
   };
 
-  // Inisialisasi Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
 
-  // Paksa isi nama user
+  // Cek dan simpan nama user
   let userName = localStorage.getItem("chatUserName");
   while (!userName || userName.trim() === "" || userName === "Anonymous") {
     alert("Nama wajib diisi untuk ikut chat.");
@@ -188,45 +211,69 @@
   const messagesDiv = document.getElementById("messages");
   const messageInput = document.getElementById("messageInput");
 
-  // Auto-resize input
+  let replyTo = null;
+
+  // Auto-resize dengan debounce
+  let resizeTimeout;
   messageInput.addEventListener("input", () => {
-    messageInput.style.height = "auto";
-    messageInput.style.height = messageInput.scrollHeight + "px";
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      messageInput.style.height = "auto";
+      messageInput.style.height = messageInput.scrollHeight + "px";
+    }, 100);
   });
 
-  // Tampilkan pesan baru
+  // Tampilkan pesan
   onChildAdded(messagesRef, (data) => {
     const msg = data.val();
-
-    // Blok iframe
     const safeText = msg.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
-
     const msgDiv = document.createElement("div");
     msgDiv.className = "message";
+
     const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit"
     });
+
     msgDiv.innerHTML = `
       <div class="user">${msg.user}</div>
+      ${msg.replyTo ? `<div style="font-size: 0.85rem; color: gray; background: #f0f0f0; padding: 5px; border-left: 3px solid #888; margin-bottom: 4px;">${msg.replyTo}</div>` : ""}
       <div>${safeText}</div>
-      <div style="font-size: 0.75rem; color: gray; text-align: right;">${time}</div>
+      <div class="timestamp">${time}</div>
     `;
+
+    // Klik pesan untuk reply
+    msgDiv.addEventListener("click", () => {
+      replyTo = `${msg.user}: ${safeText}`;
+      messageInput.placeholder = `Balas ke: ${msg.user}`;
+      messageInput.focus();
+    });
+
     messagesDiv.appendChild(msgDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    // Batas 100 pesan untuk performa
+    if (messagesDiv.children.length > 100) {
+      messagesDiv.removeChild(messagesDiv.firstChild);
+    }
   });
 
-  // Fungsi kirim pesan
+  // Kirim pesan
   window.sendMessage = function () {
     const text = messageInput.value.trim();
     if (text === "") return;
+
     push(messagesRef, {
       user: userName,
       text,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      replyTo: replyTo
     });
+
     messageInput.value = "";
-    messageInput.style.height = "40px"; // reset height
+    messageInput.style.height = "40px";
+    messageInput.placeholder = "Ketik pesan...";
+    replyTo = null;
   };
 </script>
 
