@@ -232,7 +232,9 @@
     getDatabase,
     ref,
     push,
-    onChildAdded
+    set,
+    onChildAdded,
+    onChildChanged
   } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
   const firebaseConfig = {
@@ -248,7 +250,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
-  const typingRef = ref(db, "typing");
 
   function sanitize(text) {
     const div = document.createElement("div");
@@ -292,10 +293,19 @@
     messageInput.style.height = "auto";
     messageInput.style.height = messageInput.scrollHeight + "px";
 
-    push(typingRef, { user: userName, timestamp: Date.now() });
+    set(ref(db, "typing/" + userName), {
+      user: userName,
+      typing: true,
+      timestamp: Date.now()
+    });
+
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
-      push(typingRef, { user: userName, timestamp: 0 });
+      set(ref(db, "typing/" + userName), {
+        user: userName,
+        typing: false,
+        timestamp: Date.now()
+      });
     }, 3000);
   });
 
@@ -349,16 +359,22 @@
     if (messagesDiv.children.length > 100) messagesDiv.removeChild(messagesDiv.firstChild);
   });
 
-  onChildAdded(typingRef, (data) => {
-    const { user, timestamp } = data.val();
-    if (user === userName) return;
-    if (timestamp === 0) {
-      typingDiv.textContent = "";
+  // Tampilkan siapa yang sedang mengetik
+  const typingStatusRef = ref(db, "typing");
+
+  onChildAdded(typingStatusRef, handleTypingUpdate);
+  onChildChanged(typingStatusRef, handleTypingUpdate);
+
+  function handleTypingUpdate(snapshot) {
+    const data = snapshot.val();
+    if (!data || data.user === userName) return;
+
+    if (data.typing) {
+      typingDiv.textContent = `${data.user} sedang mengetik...`;
     } else {
-      typingDiv.textContent = `${user} sedang mengetik...`;
-      setTimeout(() => { typingDiv.textContent = ""; }, 3000);
+      typingDiv.textContent = "";
     }
-  });
+  }
 
   window.scrollToBottom = function () {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -385,6 +401,13 @@
     replyTo = null;
     document.getElementById("replyPreview").style.display = "none";
     setTimeout(scrollToBottom, 100);
+
+    // Reset typing status saat kirim pesan
+    set(ref(db, "typing/" + userName), {
+      user: userName,
+      typing: false,
+      timestamp: Date.now()
+    });
   };
 
   window.cancelReply = function () {
