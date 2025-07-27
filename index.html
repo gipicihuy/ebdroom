@@ -1,3 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eberardos Room Chat</title>
+  <link rel="icon" href="https://qu.ax/lElwH.jpg" type="image/jpeg" />
+  <meta property="og:title" content="Eberardos Room Chat" />
+  <meta property="og:description" content="Join sini bro!" />
+  <meta property="og:image" content="https://qu.ax/lElwH.jpg" />
+  <meta property="og:url" content="https://ebdroomchat.vercel.app/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Chat Komunitas" />
+  <meta name="twitter:description" content="Join sini bro!" />
+  <meta name="twitter:image" content="https://qu.ax/lElwH.jpg" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Custom scrollbar dengan tema gelap */
+    .messages::-webkit-scrollbar {
+      width: 4px;
+    }
+    .messages::-webkit-scrollbar-track {
+      background: #1f2937;
+    }
+    .messages::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 10px;
+    }
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        height: 100vh;
+        z-index: 50;
+        transition: left 0.3s ease;
+      }
+      
+      .sidebar.open {
+        left: 0;
+      }
+      
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+
+    /* Animasi untuk pesan baru */
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .message-sent {
+      animation: slideInRight 0.3s ease-out;
+    }
+
+    .message-received {
+      animation: slideInLeft 0.3s ease-out;
+    }
+
+    /* Status online */
+    .online-indicator {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: #10b981;
+      border: 2px solid #111827;
+      border-radius: 50%;
+    }
+
+    /* Glassmorphism effect */
+    .glass-effect {
+      backdrop-filter: blur(10px);
+      background: rgba(17, 24, 39, 0.8);
+    }
+
+    /* Hover effects */
+    .message:hover {
+      transform: translateY(-1px);
+      transition: all 0.2s ease;
+    }
+
+    /* Typing indicator animation */
+    .typing-dots {
+      display: inline-block;
+    }
+    
+    .typing-dots span {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #6b7280;
+      margin: 0 1px;
+      animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Layout utama yang diperbaiki dengan input area yang jauh lebih besar */
+    .main-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      flex-shrink: 0;
+      height: auto;
+    }
+
+    .messages-area {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      padding-bottom: 40px; /* More space at bottom */
+      background: linear-gradient(to bottom, #111827, #000000);
+    }
+
+    /* Input section yang jauh lebih besar dan tinggi */
+    .input-section {
+      flex-shrink: 0;
+      background: #1f2937;
+      border-top: 1px solid #374151;
+      padding: 32px 20px 40px 20px; /* Much larger padding */
+      position: relative;
+      z-index: 10;
+      min-height: 160px; /* Much larger minimum height */
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 769px) {
+      .messages-container {
+        padding: 20px;
+        padding-bottom: 60px; /* Even more space on desktop */
+      }
+      
+      .input-section {
+        padding: 40px 32px 48px 32px; /* Even larger padding on desktop */
+        min-height: 200px; /* Much larger minimum height on desktop */
+      }
+    }
+
+    /* Input styling yang diperbesar dengan border yang lebih prominent */
+    .input-container {
+      background: #374151;
+      border: 2px solid #4b5563; /* Thicker border */
+      border-radius: 24px; /* Larger radius */
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); /* Much stronger shadow */
+      max-width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    .input-container:focus-within {
+      border-color: #ef4444; /* Red border on focus */
+      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.2);
+    }
+
+    .reply-preview {
+      border-radius: 24px 24px 0 0;
+    }
+
+    .input-area {
+      border-radius: 0 0 24px 24px;
+      padding: 24px; /* Much larger padding */
+    }
+
+    .reply-preview + .input-area {
+      border-radius: 0 0 24px 24px;
+    }
+
+    /* Enhanced textarea styling - much larger */
+    .enhanced-textarea {
+      min-height: 80px !important; /* Much larger minimum height */
+      max-height: 200px !important; /* Much larger maximum height */
+      font-size: 18px !important; /* Larger font size */
+      line-height: 1.6 !important;
+      padding: 20px 24px !important; /* Much more padding */
+      border-radius: 20px !important; /* Rounded corners */
+      resize: none !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .enhanced-textarea:focus {
+      transform: scale(1.02); /* Subtle scale on focus */
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.1);
+    }
+
+    /* Enhanced send button - much larger */
+    .enhanced-send-button {
+      width: 70px !important; /* Much larger button */
+      height: 70px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 22px !important; /* Much larger icon */
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3) !important;
+    }
+
+    .enhanced-send-button:hover {
+      box-shadow: 0 8px 28px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    /* Fixed input positioning */
+    .input-section {
+      position: sticky;
+      bottom: 0;
+      margin-top: auto;
+    }
+    
+    /* Add more spacing at the bottom of messages */
+    .messages .message:last-child {
+      margin-bottom: 40px; /* More space */
+    }
+
+    /* Enhanced reply preview - larger */
+    .enhanced-reply-preview {
+      padding: 20px 24px; /* Larger padding */
+      margin: 12px; /* More margin */
+      border-radius: 20px; /* Larger radius */
+      background: #4b5563;
+      border-left: 4px solid #ef4444; /* Red accent */
+    }
+
+    /* Additional spacing improvements */
+    .input-area {
+      gap: 20px; /* More gap between textarea and button */
+    }
+
+    /* Better visual hierarchy */
+    .enhanced-reply-preview .text-xs {
+      font-size: 14px; /* Larger text in reply preview */
+    }
+
+    /* Improved mobile experience */
+    @media (max-width: 768px) {
+      .input-section {
+        padding: 24px 16px 32px 16px;
+        min-height: 140px;
+      }
+      
+      .enhanced-textarea {
+        min-height: 70px !important;
+        font-size: 16px !important;
+        padding: 18px 20px !important;
+      }
+      
+      .enhanced-send-button {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 20px !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-900 h-screen flex overflow-hidden">
+
+  <!-- Sidebar Overlay for Mobile -->
+  <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar Online Users -->
+  <div id="sidebar" class="sidebar w-80 md:w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+    <!-- Sidebar Header -->
+    <div class="p-4 border-b border-gray-700 bg-gray-800 flex items-center justify-between">
+      <h2 class="text-white font-semibold text-lg flex items-center gap-2">
+        <i class="fas fa-users text-red-500"></i>
+        Online Users
+        <span id="onlineCount" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">0</span>
+      </h2>
+      <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+        <i class="fas fa-times text-xl"></i>
+      </button>
+    </div>
+    
+    <!-- Online Users List -->
+    <div id="onlineUsers" class="flex-1 overflow-y-auto p-3 space-y-2">
+      <!-- Users akan ditampilkan di sini -->
+    </div>
+  </div>
+
+  <!-- Main Chat Container -->
+  <div class="flex-1 main-container">
+    <!-- Chat Header -->
+    <div class="chat-header bg-gray-800 text-white p-3 md:p-4 flex items-center gap-3 border-b border-gray-700 shadow-lg">
+      <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-gray-700 rounded-full transition-colors">
+        <i class="fas fa-bars text-gray-400"></i>
+      </button>
+      <div class="relative">
+        <img src="https://qu.ax/lElwH.jpg" alt="Logo" class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-red-500 shadow-lg"/>
+        <div class="online-indicator"></div>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 class="text-lg md:text-xl font-bold text-white truncate">Eberardos Community</h3>
+        <p class="text-gray-400 text-xs md:text-sm flex items-center gap-1">
+          <i class="fas fa-circle text-green-400 text-xs"></i>
+          <span id="statusText">Community chat room</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="messages-area">
+      <div class="messages-container">
+        <div class="messages flex flex-col space-y-3" id="messages">
+          <!-- Welcome message removed -->
+        </div>
+      </div>
+
+      <!-- Enhanced Input Section - Much Larger -->
+      <div class="input-section">
+        <div class="input-container">
+          <!-- Enhanced Reply Preview -->
+          <div id="replyPreview" class="enhanced-reply-preview hidden relative">
+            <div class="text-red-400 font-semibold mb-3 text-sm">Membalas pesan</div>
+            <div class="text-gray-300 pr-10">
+              <span id="replyUser" class="font-semibold text-red-400"></span>: 
+              <span id="replyText" class="text-gray-300"></span>
+            </div>
+            <button onclick="cancelReply()" class="absolute top-4 right-6 text-gray-500 hover:text-red-400 text-2xl transition-colors font-bold">&times;</button>
+          </div>
+
+          <!-- Enhanced Input Area - Much Larger -->
+          <div class="input-area flex items-end">
+            <div class="flex-1 relative">
+              <textarea 
+                id="messageInput" 
+                placeholder="Ketik pesan di sini..." 
+                class="enhanced-textarea w-full bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-3 focus:ring-red-500 border border-gray-600"
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <button 
+              onclick="sendMessage()" 
+              class="enhanced-send-button bg-red-600 hover:bg-red-700 text-white font-semibold focus:outline-none focus:ring-3 focus:ring-red-500 transition-all duration-300 transform hover:scale-110 active:scale-95"
+            >
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
   import {
@@ -47,49 +453,43 @@
 
   let replyTo = null;
 
-  // Fungsi untuk membersihkan pesan dari tag berbahaya
-  function sanitizeMessage(text) {
-    return text
-      .replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]')
-      .replace(/<script.*?>.*?<\/script>/gi, '[SCRIPT diblokir]')
-      .replace(/<object.*?>.*?<\/object>/gi, '[OBJECT diblokir]')
-      .replace(/<embed.*?>.*?<\/embed>/gi, '[EMBED diblokir]')
-      .replace(/on\w+="[^"]*"/gi, '')
-      .replace(/javascript:/gi, '');
-  }
-
   // Toggle sidebar for mobile
   window.toggleSidebar = function() {
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebarOverlay");
+    
     sidebar.classList.toggle("open");
     overlay.classList.toggle("active");
   };
 
-  // Set user online
+  // Set user online status
   const userStatusRef = ref(db, `onlineUsers/${userName.replace(/[.#$[\]]/g, '_')}`);
   set(userStatusRef, {
     name: userName,
     lastSeen: serverTimestamp(),
     status: 'online'
   });
+
+  // Set user offline when disconnecting
   onDisconnect(userStatusRef).set({
     name: userName,
     lastSeen: serverTimestamp(),
     status: 'offline'
   });
 
-  // Online users display
+  // Monitor online users
   onValue(onlineUsersRef, (snapshot) => {
     const users = snapshot.val() || {};
     const onlineUsers = Object.values(users).filter(user => user.status === 'online');
+    
     onlineUsersDiv.innerHTML = '';
     onlineCountSpan.textContent = onlineUsers.length;
 
     onlineUsers.forEach(user => {
-      const avatarColor = getAvatarColor(user.name);
       const userDiv = document.createElement('div');
       userDiv.className = 'flex items-center gap-3 p-2 hover:bg-gray-700 rounded-lg cursor-pointer transition-colors';
+      
+      const avatarColor = getAvatarColor(user.name);
       userDiv.innerHTML = `
         <div class="relative">
           <div class="w-8 h-8 md:w-10 md:h-10 rounded-full ${avatarColor} flex items-center justify-center text-white font-semibold text-sm">
@@ -100,20 +500,23 @@
         <div class="flex-1 min-w-0">
           <div class="text-white font-medium text-sm truncate">${user.name}</div>
           <div class="text-green-400 text-xs flex items-center gap-1">
-            <i class="fas fa-circle text-xs"></i> Online
+            <i class="fas fa-circle text-xs"></i>
+            Online
           </div>
         </div>
       `;
+      
       onlineUsersDiv.appendChild(userDiv);
     });
   });
 
-  // Resize textarea
+  // Auto-resize textarea dengan ukuran yang lebih besar
   messageInput.addEventListener("input", () => {
-    messageInput.style.height = "80px";
-    messageInput.style.height = Math.min(messageInput.scrollHeight, 200) + "px";
+    messageInput.style.height = "80px"; // Minimum height yang jauh lebih besar
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 200) + "px"; // Maximum height yang lebih besar
   });
 
+  // Enter key to send message
   messageInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -124,14 +527,17 @@
   // Display messages
   onChildAdded(messagesRef, (data) => {
     const msg = data.val();
-    const safeText = sanitizeMessage(msg.text);
-    const isCurrentUser = msg.user === userName;
-    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
-      hour: "2-digit", minute: "2-digit"
-    });
-    const avatarColor = getAvatarColor(msg.user);
+    const safeText = msg.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
     const msgDiv = document.createElement("div");
 
+    const isCurrentUser = msg.user === userName;
+    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    const avatarColor = getAvatarColor(msg.user);
+    
     if (isCurrentUser) {
       msgDiv.className = "flex justify-end message-sent";
       msgDiv.innerHTML = `
@@ -145,7 +551,8 @@
               <div class="text-xs bg-red-700 bg-opacity-50 p-2 rounded-lg border-l-4 border-red-400 mb-2">
                 <div class="text-red-200 font-medium">${msg.replyTo.split(':')[0]}</div>
                 <div class="text-red-100">${msg.replyTo.substring(msg.replyTo.indexOf(':') + 1).trim()}</div>
-              </div>` : ""}
+              </div>
+            ` : ""}
             <div class="break-words text-sm md:text-base">${safeText}</div>
             <div class="text-xs text-red-200 mt-1 text-right flex items-center justify-end gap-1">
               ${time}
@@ -166,7 +573,8 @@
             <div class="text-xs bg-gray-600 p-2 rounded-lg border-l-4 border-gray-500 mb-2">
               <div class="text-gray-300 font-medium">${msg.replyTo.split(':')[0]}</div>
               <div class="text-gray-400">${msg.replyTo.substring(msg.replyTo.indexOf(':') + 1).trim()}</div>
-            </div>` : ""}
+            </div>
+          ` : ""}
           <div class="break-words text-sm md:text-base">${safeText}</div>
           <div class="text-xs text-gray-400 mt-1 text-right">${time}</div>
         </div>
@@ -184,39 +592,70 @@
     });
 
     messagesDiv.appendChild(msgDiv);
+    
+    // Auto scroll to bottom
     const messagesContainer = document.querySelector('.messages-container');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Limit messages for performance
+    if (messagesDiv.children.length > 50) {
+      messagesDiv.removeChild(messagesDiv.children[0]);
+    }
   });
 
   // Send message function
-  window.sendMessage = function() {
+  window.sendMessage = function () {
     const text = messageInput.value.trim();
     if (text === "") return;
 
     push(messagesRef, {
       user: userName,
-      text: text,
+      text,
       timestamp: Date.now(),
       replyTo: replyTo
     });
 
     messageInput.value = "";
-    messageInput.style.height = "80px";
+    messageInput.style.height = "80px"; // Reset to larger minimum height
     replyTo = null;
     replyPreview.classList.add("hidden");
   };
 
-  // Cancel reply
+  // Cancel reply function
   window.cancelReply = function() {
     replyTo = null;
     replyPreview.classList.add("hidden");
   };
 
-  // Avatar warna dinamis
+  // Get avatar color based on username
   function getAvatarColor(name) {
-    const colors = ["bg-red-500", "bg-green-500", "bg-blue-500", "bg-yellow-500", "bg-pink-500", "bg-purple-500", "bg-indigo-500"];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+    const colors = [
+      'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+      'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-orange-500'
+    ];
+    const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
   }
+
+  // Update last seen every 30 seconds
+  setInterval(() => {
+    set(userStatusRef, {
+      name: userName,
+      lastSeen: serverTimestamp(),
+      status: 'online'
+    });
+  }, 30000);
+
+  // Close sidebar when clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarButton = e.target.closest('button[onclick="toggleSidebar()"]');
+    
+    if (!sidebar.contains(e.target) && !sidebarButton && sidebar.classList.contains('open')) {
+      toggleSidebar();
+    }
+  });
 </script>
+
+</body>
+</html>
