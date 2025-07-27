@@ -1,3 +1,47 @@
+<style>
+  #messageInput.locked {
+    background-color: #f0f0f0;
+    color: #888;
+    cursor: not-allowed;
+    background-image: url('https://cdn-icons-png.flaticon.com/512/565/565547.png');
+    background-size: 20px;
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    padding-left: 40px;
+    height: 40px; /* pastikan tinggi tetap */
+    line-height: 20px; /* sejajarkan teks placeholder dengan tinggi */
+    font-size: 14px;
+  }
+
+  #messageInput.locked::placeholder {
+    color: #888;
+    font-style: italic;
+  }
+</style>
+<script>
+  const jam = new Date().getHours();
+  const isNight = (jam >= 22 || jam < 5);
+
+  if (isNight) {
+    window.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("messageInput");
+      const btn = document.querySelector(".input-area button");
+
+      if (input) {
+        input.classList.add("locked");
+        input.placeholder = "Chat is locked by Owner";
+        input.disabled = true;
+      }
+
+      if (btn) {
+        btn.disabled = false; // tombol tetap aktif
+        btn.onclick = () => {
+          alert("Gabisa njing");
+        };
+      }
+    });
+  }
+</script>
 <!DOCTYPE html>
 <html lang="id">
 <head>
