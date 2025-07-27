@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Community Chat Room</title>
-  <link rel="icon" type="image/jpeg" href="https://qu.ax/lElwH.jpg" />
+  <title>Eberardos Room Chat</title>
+  <link rel="icon" href="https://qu.ax/lElwH.jpg" type="image/jpeg" />
+
+  <!-- Meta thumbnail -->
   <meta property="og:title" content="Eberardos Room Chat" />
   <meta property="og:description" content="Join sini bro!" />
   <meta property="og:image" content="https://qu.ax/lElwH.jpg" />
@@ -14,185 +16,209 @@
   <meta name="twitter:title" content="Chat Komunitas" />
   <meta name="twitter:description" content="Join sini bro!" />
   <meta name="twitter:image" content="https://qu.ax/lElwH.jpg" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Font & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet"/>
+
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Nunito', sans-serif;
     }
+
     body {
-      background: #f0f2f5;
+      background: #e4ecf2;
+      height: 100vh;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
       flex-direction: column;
     }
+
     .chat-container {
-      width: 95%;
-      max-width: 500px;
-      background: white;
-      border-radius: 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      overflow: hidden;
     }
+
     .header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: #0077cc;
+      background: #656464;
       color: white;
       padding: 15px;
+      gap: 10px;
     }
+
     .header img {
       width: 40px;
       height: 40px;
       border-radius: 50%;
     }
+
     .header h3 {
       font-size: 1.2rem;
     }
+
     .messages {
-      height: 400px;
+      flex: 1;
       overflow-y: auto;
       padding: 15px;
+      background: #f0f4f8;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      background: #eef3f9;
     }
+
     .message {
-      background: white;
+      background: #ffffff;
       padding: 10px 14px;
       border-radius: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      max-width: 85%;
-      word-wrap: break-word;
+      max-width: 75%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       position: relative;
     }
+
     .message .user {
       font-weight: bold;
-      margin-bottom: 4px;
-      color: #0077cc;
+      color: #007bff;
       font-size: 0.95rem;
+      margin-bottom: 4px;
     }
-    .message .time {
+
+    .message .timestamp {
       font-size: 0.75rem;
-      color: #666;
-      text-align: right;
-      margin-top: 4px;
+      color: #888;
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
     }
+
     .input-area {
       display: flex;
       padding: 10px;
-      gap: 10px;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #ddd;
       background: #fafafa;
+      gap: 10px;
     }
-    .input-area textarea {
+
+    textarea {
       flex: 1;
+      resize: none;
       padding: 10px;
       border: 1px solid #aaa;
       border-radius: 8px;
-      resize: none;
-      font-size: 14px;
-      line-height: 1.4;
-      overflow-y: hidden;
       min-height: 40px;
-      max-height: 150px;
+      max-height: 120px;
+      overflow-y: auto;
     }
-    .input-area button {
-      padding: 10px 15px;
+
+    button {
+      padding: 10px 16px;
       border: none;
-      background: #0077cc;
+      background: #656464;
       color: white;
       border-radius: 8px;
       cursor: pointer;
+    }
+
+    @media screen and (max-width: 600px) {
+      .chat-container {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="chat-container">
-    <div class="header">
-      <img src="https://qu.ax/lElwH.jpg" alt="Logo" />
-      <h3>Eberardos Community</h3>
-    </div>
-
-    <div class="messages" id="messages"></div>
-
-    <div class="input-area">
-      <textarea id="messageInput" placeholder="Ketik pesan..."></textarea>
-      <button onclick="sendMessage()">Kirim</button>
-    </div>
+<div class="chat-container">
+  <div class="header">
+    <img src="https://qu.ax/lElwH.jpg" alt="Logo"/>
+    <h3>Eberardos Community</h3>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+  <div class="messages" id="messages"></div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBynK1eoPMjOQZAZsUxSiG7J348ENYHkNU",
-      authDomain: "chatroomebd.firebaseapp.com",
-      databaseURL: "https://chatroomebd-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "chatroomebd",
-      storageBucket: "chatroomebd.appspot.com",
-      messagingSenderId: "686847521502",
-      appId: "1:686847521502:web:89ea20aa523da58e85484f"
-    };
+  <div class="input-area">
+    <textarea id="messageInput" placeholder="Ketik pesan..." oninput="autoResize(this)"></textarea>
+    <button onclick="sendMessage()">Kirim</button>
+  </div>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const messagesRef = ref(db, "chat");
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
-    let userName = localStorage.getItem("chatUserName");
-    while (!userName || userName.trim() === "" || userName === "Anonymous") {
-      alert("Nama wajib diisi untuk ikut chat.");
-      userName = prompt("Masukkan nama kamu (wajib):");
-    }
-    localStorage.setItem("chatUserName", userName);
+  const firebaseConfig = {
+    apiKey: "AIzaSyBynK1eoPMjOQZAZsUxSiG7J348ENYHkNU",
+    authDomain: "chatroomebd.firebaseapp.com",
+    databaseURL: "https://chatroomebd-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "chatroomebd",
+    storageBucket: "chatroomebd.appspot.com",
+    messagingSenderId: "686847521502",
+    appId: "1:686847521502:web:89ea20aa523da58e85484f"
+  };
 
-    const messagesDiv = document.getElementById("messages");
-    const messageInput = document.getElementById("messageInput");
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const messagesRef = ref(db, "chat");
 
-    // Auto-resize textarea saat mengetik
-    messageInput.addEventListener("input", () => {
-      messageInput.style.height = "auto";
-      messageInput.style.height = messageInput.scrollHeight + "px";
+  let userName = localStorage.getItem("chatUserName");
+  while (!userName || userName.trim() === "" || userName === "Anonymous") {
+    alert("Nama wajib diisi untuk ikut chat.");
+    userName = prompt("Masukkan nama kamu (wajib):");
+  }
+  localStorage.setItem("chatUserName", userName);
+
+  const messagesDiv = document.getElementById("messages");
+  const messageInput = document.getElementById("messageInput");
+
+  function formatTime(date) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  onChildAdded(messagesRef, (data) => {
+    const msg = data.val();
+    const time = msg.time || "??:??";
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "message";
+    msgDiv.innerHTML = `
+      <div class="user">${msg.user}</div>
+      <div>${msg.text}</div>
+      <div class="timestamp">${time}</div>
+    `;
+    messagesDiv.appendChild(msgDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  window.sendMessage = function () {
+    const text = messageInput.value.trim();
+    if (text === "") return;
+    const now = new Date();
+    push(messagesRef, {
+      user: userName,
+      text,
+      time: formatTime(now)
     });
+    messageInput.value = "";
+    autoResize(messageInput);
+  };
 
-    // Menampilkan pesan
-    onChildAdded(messagesRef, (data) => {
-      const msg = data.val();
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "message";
-      msgDiv.innerHTML = `
-        <div class="user">${msg.user}</div>
-        <div>${msg.text}</div>
-        <div class="time">${msg.time || ""}</div>`;
-      messagesDiv.appendChild(msgDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
+  window.autoResize = function (textarea) {
+    textarea.style.height = "auto";
+    textarea.style.height = (textarea.scrollHeight) + "px";
+  };
+</script>
 
-    // Fungsi kirim pesan
-    window.sendMessage = function () {
-      const text = messageInput.value.trim();
-      if (text === "") return;
-
-      const now = new Date();
-      const time = now.getHours().toString().padStart(2, "0") + "." + now.getMinutes().toString().padStart(2, "0");
-
-      push(messagesRef, {
-        user: userName,
-        text: text,
-        time: time
-      });
-
-      messageInput.value = "";
-      messageInput.style.height = "auto";
-    };
-  </script>
 </body>
 </html>
