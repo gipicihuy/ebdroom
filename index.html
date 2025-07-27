@@ -155,7 +155,12 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+  import {
+    getDatabase,
+    ref,
+    push,
+    onChildAdded
+  } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBynK1eoPMjOQZAZsUxSiG7J348ENYHkNU",
@@ -167,10 +172,12 @@
     appId: "1:686847521502:web:89ea20aa523da58e85484f"
   };
 
+  // Inisialisasi Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
 
+  // Paksa isi nama user
   let userName = localStorage.getItem("chatUserName");
   while (!userName || userName.trim() === "" || userName === "Anonymous") {
     alert("Nama wajib diisi untuk ikut chat.");
@@ -181,42 +188,45 @@
   const messagesDiv = document.getElementById("messages");
   const messageInput = document.getElementById("messageInput");
 
-  function formatTime(date) {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
+  // Auto-resize input
+  messageInput.addEventListener("input", () => {
+    messageInput.style.height = "auto";
+    messageInput.style.height = messageInput.scrollHeight + "px";
+  });
 
+  // Tampilkan pesan baru
   onChildAdded(messagesRef, (data) => {
     const msg = data.val();
-    const time = msg.time || "??:??";
+
+    // Blok iframe
+    const safeText = msg.text.replace(/<iframe.*?>.*?<\/iframe>/gi, '[IFRAME diblokir]');
+
     const msgDiv = document.createElement("div");
     msgDiv.className = "message";
+    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
     msgDiv.innerHTML = `
       <div class="user">${msg.user}</div>
-      <div>${msg.text}</div>
-      <div class="timestamp">${time}</div>
+      <div>${safeText}</div>
+      <div style="font-size: 0.75rem; color: gray; text-align: right;">${time}</div>
     `;
     messagesDiv.appendChild(msgDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 
+  // Fungsi kirim pesan
   window.sendMessage = function () {
     const text = messageInput.value.trim();
     if (text === "") return;
-    const now = new Date();
     push(messagesRef, {
       user: userName,
       text,
-      time: formatTime(now)
+      timestamp: Date.now()
     });
     messageInput.value = "";
-    autoResize(messageInput);
-  };
-
-  window.autoResize = function (textarea) {
-    textarea.style.height = "auto";
-    textarea.style.height = (textarea.scrollHeight) + "px";
+    messageInput.style.height = "40px"; // reset height
   };
 </script>
 
