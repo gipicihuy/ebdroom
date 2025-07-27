@@ -70,12 +70,19 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       max-width: 85%;
       word-wrap: break-word;
+      position: relative;
     }
     .message .user {
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       color: #0077cc;
       font-size: 0.95rem;
+    }
+    .message .time {
+      font-size: 0.75rem;
+      color: #666;
+      text-align: right;
+      margin-top: 4px;
     }
     .input-area {
       display: flex;
@@ -84,11 +91,17 @@
       border-top: 1px solid #ccc;
       background: #fafafa;
     }
-    .input-area input {
+    .input-area textarea {
       flex: 1;
       padding: 10px;
       border: 1px solid #aaa;
       border-radius: 8px;
+      resize: none;
+      font-size: 14px;
+      line-height: 1.4;
+      overflow-y: hidden;
+      min-height: 40px;
+      max-height: 150px;
     }
     .input-area button {
       padding: 10px 15px;
@@ -111,17 +124,15 @@
     <div class="messages" id="messages"></div>
 
     <div class="input-area">
-      <input type="text" id="messageInput" placeholder="Ketik pesan..." />
+      <textarea id="messageInput" placeholder="Ketik pesan..."></textarea>
       <button onclick="sendMessage()">Kirim</button>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBynK1eoPMjOQZAZsUxSiG7J348ENYHkNU",
       authDomain: "chatroomebd.firebaseapp.com",
@@ -132,12 +143,10 @@
       appId: "1:686847521502:web:89ea20aa523da58e85484f"
     };
 
-    // Inisialisasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const messagesRef = ref(db, "chat");
 
-    // Paksa isi nama user (nggak boleh anonymous)
     let userName = localStorage.getItem("chatUserName");
     while (!userName || userName.trim() === "" || userName === "Anonymous") {
       alert("Nama wajib diisi untuk ikut chat.");
@@ -148,12 +157,21 @@
     const messagesDiv = document.getElementById("messages");
     const messageInput = document.getElementById("messageInput");
 
-    // Tampilkan pesan baru
+    // Auto-resize textarea saat mengetik
+    messageInput.addEventListener("input", () => {
+      messageInput.style.height = "auto";
+      messageInput.style.height = messageInput.scrollHeight + "px";
+    });
+
+    // Menampilkan pesan
     onChildAdded(messagesRef, (data) => {
       const msg = data.val();
       const msgDiv = document.createElement("div");
       msgDiv.className = "message";
-      msgDiv.innerHTML = `<div class="user">${msg.user}</div><div>${msg.text}</div>`;
+      msgDiv.innerHTML = `
+        <div class="user">${msg.user}</div>
+        <div>${msg.text}</div>
+        <div class="time">${msg.time || ""}</div>`;
       messagesDiv.appendChild(msgDiv);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
@@ -162,8 +180,18 @@
     window.sendMessage = function () {
       const text = messageInput.value.trim();
       if (text === "") return;
-      push(messagesRef, { user: userName, text });
+
+      const now = new Date();
+      const time = now.getHours().toString().padStart(2, "0") + "." + now.getMinutes().toString().padStart(2, "0");
+
+      push(messagesRef, {
+        user: userName,
+        text: text,
+        time: time
+      });
+
       messageInput.value = "";
+      messageInput.style.height = "auto";
     };
   </script>
 </body>
