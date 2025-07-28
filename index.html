@@ -1,10 +1,4 @@
-Copilot
-
-Copilot navigation
-
-Copilot Chat
-Aplikasi web chat dengan fitur admin
-You said: <style> #messageInput.locked {
+<style> #messageInput.locked {
 <style>
   #messageInput.locked {
     background-color: #f0f0f0;
@@ -27,7 +21,7 @@ You said: <style> #messageInput.locked {
 </style>
 <script>
   const jam = new Date().getHours();
-  const isNight = (jam >= 22 || jam < 5);
+  const isNight = (jam >= 0 || jam < 0);
 
   if (isNight) {
     window.addEventListener("DOMContentLoaded", () => {
@@ -43,7 +37,7 @@ You said: <style> #messageInput.locked {
       if (btn) {
         btn.disabled = false; // tombol tetap aktif
         btn.onclick = () => {
-          alert("Gabisa njing");
+          alert("gabisa njing");
         };
       }
     });
