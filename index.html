@@ -76,12 +76,6 @@
       background: #f9fafb;
       scroll-behavior: smooth;
     }
-    #typingStatus {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin: -10px 0 5px;
-      padding: 0 15px;
-    }
     .message {
       background: #ffffff;
       user-select: none;
@@ -197,7 +191,6 @@
     @media screen and (max-width: 600px) {
       .chat-container { width: 100%; height: 100%; border-radius: 0; }
     }
-    /* Username List Modal */
     #userListModal {
       display:none;
       position:fixed;
@@ -233,6 +226,23 @@
       padding: 6px 12px;
       font-size: 1em;
     }
+    #messageInput.locked {
+      background-color: #f0f0f0;
+      color: #888;
+      cursor: not-allowed;
+      background-image: url('https://cdn-icons-png.flaticon.com/512/565/565547.png');
+      background-size: 20px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      padding-left: 40px;
+      height: 40px;
+      line-height: 20px;
+      font-size: 14px;
+    }
+    #messageInput.locked::placeholder {
+      color: #888;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -244,8 +254,6 @@
   </div>
 
   <div class="messages" id="messages"></div>
-  <div id="typingStatus"></div>
-
   <div class="scroll-button" id="scrollBtn" onclick="scrollToBottom()">
     <i class="fas fa-chevron-down"></i>
   </div>
@@ -343,10 +351,14 @@
   }
   localStorage.setItem("chatUserName", userName);
 
-  // Save/update username in firebase users list
-  // Use a normalized key (for edit)
-  const userKey = userName.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
-  set(ref(db, "users/" + userKey), {
+  // Generate userId unik sekali per user/device
+  let userId = localStorage.getItem("userId");
+  if (!userId) {
+    userId = Math.random().toString(36).substr(2, 12) + Date.now().toString(36);
+    localStorage.setItem("userId", userId);
+  }
+  // Set/update data user (gunakan userId sebagai key)
+  set(ref(db, "users/" + userId), {
     user: userName,
     lastLogin: Date.now()
   });
@@ -461,11 +473,11 @@
       userListUl.innerHTML = "";
       snap.forEach(child => {
         const data = child.val();
-        const id = child.key;
+        const key = child.key;
         const li = document.createElement("li");
         li.innerHTML = `
           <span>${sanitize(data.user)}</span>
-          <button onclick="editUser('${id}', '${sanitize(data.user)}')">Edit</button>
+          <button onclick="editUser('${key}', '${sanitize(data.user)}')">Edit</button>
         `;
         userListUl.appendChild(li);
       });
@@ -473,32 +485,13 @@
     });
   };
 
-  window.editUser = function(id, oldName) {
+  window.editUser = function(key, oldName) {
     const newName = prompt("Ubah nama user:", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
-      update(ref(db, "users/" + id), { user: newName });
+      update(ref(db, "users/" + key), { user: newName });
       alert("Username diubah!");
     }
   };
 </script>
-<style>
-  #messageInput.locked {
-    background-color: #f0f0f0;
-    color: #888;
-    cursor: not-allowed;
-    background-image: url('https://cdn-icons-png.flaticon.com/512/565/565547.png');
-    background-size: 20px;
-    background-repeat: no-repeat;
-    background-position: 10px center;
-    padding-left: 40px;
-    height: 40px;
-    line-height: 20px;
-    font-size: 14px;
-  }
-  #messageInput.locked::placeholder {
-    color: #888;
-    font-style: italic;
-  }
-</style>
 </body>
 </html>
