@@ -508,10 +508,14 @@
       snap.forEach(child => {
         const data = child.val();
         const key = child.key;
+        // Convert HTML/emoji/anything to plain text for prompt only
+        const dummy = document.createElement('div');
+        dummy.innerHTML = data.user;
+        const plainName = dummy.innerText;
         const li = document.createElement("li");
         li.innerHTML = `
           <span>${sanitize(data.user)}</span>
-          <button onclick="editUser('${key}', '${sanitize(data.user)}')">Edit</button>
+          <button onclick="editUser('${key}', \`${plainName.replace(/`/g,'\\`')}\`)">Edit</button>
         `;
         userListUl.appendChild(li);
       });
