@@ -297,113 +297,203 @@
   }
 </script>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    push,
+    set,
+    onChildAdded,
+    onValue,
+    update
+  } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
 
   const firebaseConfig = {
-    databaseURL: "https://your-db-url",
+    apiKey: "AIzaSyBynK1eoPMjOQZAZsUxSiG7J348ENYHkNU",
+    authDomain: "chatroomebd.firebaseapp.com",
+    databaseURL: "https://chatroomebd-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "chatroomebd",
+    storageBucket: "chatroomebd.appspot.com",
+    messagingSenderId: "686847521502",
+    appId: "1:686847521502:web:89ea20aa523da58e85484f"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const chatRef = ref(db, "messages");
+  const messagesRef = ref(db, "chat");
   const usersRef = ref(db, "users");
 
-  const chatBox = document.getElementById("chatBox");
+  function sanitize(text) {
+    const div = document.createElement("div");
+    div.innerHTML = text;
+    div.querySelectorAll("iframe").forEach(i => i.remove());
+    return div.innerHTML;
+  }
+  function stringToColor(str) {
+    if (!str) return "#000";
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 65%, 50%)`;
+  }
+
+  // Username dan userId
+  let userName = localStorage.getItem("chatUserName");
+  while (!userName || userName.trim() === "" || userName === "Anonymous") {
+    const input = prompt("Masukkan nama kamu (wajib):");
+    if (input === null) {
+      alert("Nama diperlukan untuk lanjut.");
+      continue;
+    }
+    userName = input.trim();
+  }
+  localStorage.setItem("chatUserName", userName);
+
+  // Generate userId unik sekali per user/device
+  let userId = localStorage.getItem("userId");
+  if (!userId) {
+    userId = Math.random().toString(36).substr(2, 12) + Date.now().toString(36);
+    localStorage.setItem("userId", userId);
+  }
+  // Set/update data user (gunakan userId sebagai key)
+  set(ref(db, "users/" + userId), {
+    user: userName,
+    lastLogin: Date.now()
+  });
+
+  const messagesDiv = document.getElementById("messages");
   const messageInput = document.getElementById("messageInput");
-  const sendBtn = document.getElementById("sendBtn");
-  const userName = localStorage.getItem("username") || prompt("Masukkan username:");
-  localStorage.setItem("username", userName);
+  const scrollBtn = document.getElementById("scrollBtn");
+  let replyTo = null;
+  let sending = false;
+  let isUserAtBottom = true;
 
-  const userId = localStorage.getItem("userId") || Date.now().toString();
-  localStorage.setItem("userId", userId);
+  // Cache user map
+  let userMap = {};
 
-  update(ref(db, "users/" + userId), { user: userName });
-
-  const userMap = {};
-
+  // Listen user data
   onValue(usersRef, snap => {
+    userMap = {};
     snap.forEach(child => {
       userMap[child.key] = child.val().user;
     });
+    // Redraw all messages
+    redrawMessages();
   });
 
-  function sanitize(str) {
-    const temp = document.createElement("div");
-    temp.textContent = str;
-    return temp.innerHTML;
+  // Store messages in memory for redraw
+  let messagesArr = [];
+
+  function redrawMessages() {
+    messagesDiv.innerHTML = '';
+    messagesArr.forEach(msg => {
+      renderMessage(msg);
+    });
+    if (isUserAtBottom) scrollToBottom();
   }
 
-  onValue(chatRef, snap => {
-    chatBox.innerHTML = "";
-    snap.forEach(child => {
-      const data = child.val();
-      const msgId = child.key;
-      const displayName = data.user || "Unknown";
-      const replyText = data.reply ? `<div class="reply">Balasan ke: ${sanitize(data.reply)}</div>` : "";
-      const isMine = data.userId === userId;
-      const msgClass = isMine ? "message mine" : "message";
+  function renderMessage(msg) {
+    if (!msg || !msg.text || !msg.userId) return;
+    const safeText = sanitize(msg.text);
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "message";
+    if (msg.userId === userId) msgDiv.classList.add("mine");
 
-      chatBox.innerHTML += `
-        <div class="${msgClass}">
-          <div class="name">${displayName}</div>
-          ${replyText}
-          <div class="text">${sanitize(data.text)}</div>
-          <button onclick="replyTo('${sanitize(data.text)}')">↪</button>
-        </div>
-      `;
+    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
+      hour: "2-digit", minute: "2-digit"
     });
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
 
-  window.replyTo = function (text) {
-    messageInput.setAttribute("data-reply", text);
-    messageInput.placeholder = `Balas ke: ${text}`;
-  };
+    const displayName = userMap[msg.userId] || msg.user || "Unknown";
+    const userColor = stringToColor(displayName);
 
-  sendBtn.onclick = function () {
-    const text = messageInput.value.trim();
-    const reply = messageInput.getAttribute("data-reply");
+    msgDiv.innerHTML = `
+      <div class="user" style="color: ${userColor};"><i class="fas fa-user-circle"></i> ${sanitize(displayName)}</div>
+      ${msg.replyTo ? `<div style="font-size: 0.85rem; color: gray; background: #f0f0f0; padding: 5px; border-left: 3px solid #888; margin-bottom: 4px;">${sanitize(msg.replyTo)}</div>` : ""}
+      <div>${safeText}</div>
+      <div class="timestamp">${time}</div>
+    `;
 
-    if (text !== "") {
-      const msg = {
-        text: text,
-        user: userName,
-        userId: userId,
-        reply: reply || null,
-        timestamp: Date.now()
-      };
-      push(chatRef, msg);
-      messageInput.value = "";
-      messageInput.removeAttribute("data-reply");
-      messageInput.placeholder = "Ketik pesan...";
+    msgDiv.addEventListener("click", () => {
+      replyTo = `${displayName}: ${msg.text}`;
+      messageInput.placeholder = `Balas ke: ${displayName}`;
+      document.getElementById("replyUser").textContent = displayName;
+      document.getElementById("replyText").textContent = msg.text;
+      document.getElementById("replyPreview").style.display = "block";
+      messageInput.focus();
+    });
+
+    messagesDiv.appendChild(msgDiv);
+  }
+
+  // Listen for new chat messages
+  onChildAdded(messagesRef, (data) => {
+    const msg = data.val();
+    if (!msg || !msg.text || !msg.userId) return;
+    messagesArr.push(msg);
+    renderMessage(msg);
+    if (messagesArr.length > 100) {
+      messagesArr.shift();
+      redrawMessages();
     }
+  });
+
+  messageInput.addEventListener("input", () => {
+    messageInput.style.height = "auto";
+    messageInput.style.height = messageInput.scrollHeight + "px";
+  });
+
+  messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  messagesDiv.addEventListener("scroll", () => {
+    const nearBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight < 150;
+    isUserAtBottom = nearBottom;
+    scrollBtn.classList.toggle("visible", !nearBottom);
+  });
+
+  window.scrollToBottom = function () {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   };
 
-  // 🔒 Kunci input saat malam hari
-  const jam = new Date().getHours();
-  const isNight = (jam >= 22 || jam < 5);
-  if (isNight) {
-    window.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("messageInput");
-      const btn = document.querySelector(".input-area button");
+  window.sendMessage = function () {
+    if (sending) return;
+    const text = messageInput.value.trim();
+    if (text === "") return;
 
-      if (input) {
-        input.classList.add("locked");
-        input.placeholder = "🔒 Chat terkunci karena sudah malam...";
-        input.disabled = true;
-      }
+    sending = true;
+    setTimeout(() => sending = false, 500);
 
-      if (btn) {
-        btn.disabled = false;
-        btn.onclick = () => {
-          alert("🔒 Chat tidak tersedia malam hari. Silakan kembali besok pagi!");
-        };
-      }
+    // Always get latest username from /users
+    const latestUserName = userMap[userId] || userName;
+    push(messagesRef, {
+      userId: userId,
+      user: latestUserName,
+      text,
+      timestamp: Date.now(),
+      replyTo: replyTo
     });
-  }
 
-  // 🛠 Admin Panel
+    messageInput.value = "";
+    messageInput.style.height = "40px";
+    messageInput.placeholder = "Ketik pesan...";
+    replyTo = null;
+    document.getElementById("replyPreview").style.display = "none";
+    setTimeout(scrollToBottom, 100);
+  };
+
+  window.cancelReply = function () {
+    replyTo = null;
+    messageInput.placeholder = "Ketik pesan...";
+    document.getElementById("replyPreview").style.display = "none";
+  };
+
+  // ADMIN USER LIST MODAL
   const adminBtn = document.getElementById("adminUserList");
   const userListModal = document.getElementById("userListModal");
   const userListUl = document.getElementById("userList");
@@ -412,18 +502,16 @@
     adminBtn.style.display = "none";
   }
 
-  adminBtn.onclick = function () {
+  adminBtn.onclick = function() {
     onValue(usersRef, snap => {
       userListUl.innerHTML = "";
       snap.forEach(child => {
         const data = child.val();
         const key = child.key;
-        const encodedName = encodeURIComponent(data.user);
-
         const li = document.createElement("li");
         li.innerHTML = `
           <span>${sanitize(data.user)}</span>
-          <button onclick="editUser('${key}', decodeURIComponent('${encodedName}'))">Edit</button>
+          <button onclick="editUser('${key}', '${sanitize(data.user)}')">Edit</button>
         `;
         userListUl.appendChild(li);
       });
@@ -431,7 +519,7 @@
     });
   };
 
-  window.editUser = function (key, oldName) {
+  window.editUser = function(key, oldName) {
     const newName = prompt("Ubah nama user:", oldName);
     if (newName && newName.trim() !== "" && newName !== oldName) {
       update(ref(db, "users/" + key), { user: newName });
@@ -440,3 +528,4 @@
   };
 </script>
 </body>
+</html>
