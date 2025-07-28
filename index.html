@@ -339,7 +339,7 @@
     return `hsl(${hue}, 65%, 50%)`;
   }
 
-  // Username - local & firebase users
+  // Username dan userId
   let userName = localStorage.getItem("chatUserName");
   while (!userName || userName.trim() === "" || userName === "Anonymous") {
     const input = prompt("Masukkan nama kamu (wajib):");
@@ -370,6 +370,75 @@
   let sending = false;
   let isUserAtBottom = true;
 
+  // Cache user map
+  let userMap = {};
+
+  // Listen user data
+  onValue(usersRef, snap => {
+    userMap = {};
+    snap.forEach(child => {
+      userMap[child.key] = child.val().user;
+    });
+    // Redraw all messages
+    redrawMessages();
+  });
+
+  // Store messages in memory for redraw
+  let messagesArr = [];
+
+  function redrawMessages() {
+    messagesDiv.innerHTML = '';
+    messagesArr.forEach(msg => {
+      renderMessage(msg);
+    });
+    if (isUserAtBottom) scrollToBottom();
+  }
+
+  function renderMessage(msg) {
+    if (!msg || !msg.text || !msg.userId) return;
+    const safeText = sanitize(msg.text);
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "message";
+    if (msg.userId === userId) msgDiv.classList.add("mine");
+
+    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
+      hour: "2-digit", minute: "2-digit"
+    });
+
+    const displayName = userMap[msg.userId] || msg.user || "Unknown";
+    const userColor = stringToColor(displayName);
+
+    msgDiv.innerHTML = `
+      <div class="user" style="color: ${userColor};"><i class="fas fa-user-circle"></i> ${sanitize(displayName)}</div>
+      ${msg.replyTo ? `<div style="font-size: 0.85rem; color: gray; background: #f0f0f0; padding: 5px; border-left: 3px solid #888; margin-bottom: 4px;">${sanitize(msg.replyTo)}</div>` : ""}
+      <div>${safeText}</div>
+      <div class="timestamp">${time}</div>
+    `;
+
+    msgDiv.addEventListener("click", () => {
+      replyTo = `${displayName}: ${msg.text}`;
+      messageInput.placeholder = `Balas ke: ${displayName}`;
+      document.getElementById("replyUser").textContent = displayName;
+      document.getElementById("replyText").textContent = msg.text;
+      document.getElementById("replyPreview").style.display = "block";
+      messageInput.focus();
+    });
+
+    messagesDiv.appendChild(msgDiv);
+  }
+
+  // Listen for new chat messages
+  onChildAdded(messagesRef, (data) => {
+    const msg = data.val();
+    if (!msg || !msg.text || !msg.userId) return;
+    messagesArr.push(msg);
+    renderMessage(msg);
+    if (messagesArr.length > 100) {
+      messagesArr.shift();
+      redrawMessages();
+    }
+  });
+
   messageInput.addEventListener("input", () => {
     messageInput.style.height = "auto";
     messageInput.style.height = messageInput.scrollHeight + "px";
@@ -388,43 +457,6 @@
     scrollBtn.classList.toggle("visible", !nearBottom);
   });
 
-  onChildAdded(messagesRef, (data) => {
-    const msg = data.val();
-    if (!msg || !msg.text || !msg.user) return;
-
-    const safeText = sanitize(msg.text);
-    const msgDiv = document.createElement("div");
-    msgDiv.className = "message";
-    if (msg.user === userName) msgDiv.classList.add("mine");
-
-    const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString("id-ID", {
-      hour: "2-digit", minute: "2-digit"
-    });
-
-    const userColor = stringToColor(msg.user);
-
-    msgDiv.innerHTML = `
-      <div class="user" style="color: ${userColor};"><i class="fas fa-user-circle"></i> ${sanitize(msg.user)}</div>
-      ${msg.replyTo ? `<div style="font-size: 0.85rem; color: gray; background: #f0f0f0; padding: 5px; border-left: 3px solid #888; margin-bottom: 4px;">${sanitize(msg.replyTo)}</div>` : ""}
-      <div>${safeText}</div>
-      <div class="timestamp">${time}</div>
-    `;
-
-    msgDiv.addEventListener("click", () => {
-      replyTo = `${msg.user}: ${msg.text}`;
-      messageInput.placeholder = `Balas ke: ${msg.user}`;
-      document.getElementById("replyUser").textContent = msg.user;
-      document.getElementById("replyText").textContent = msg.text;
-      document.getElementById("replyPreview").style.display = "block";
-      messageInput.focus();
-    });
-
-    messagesDiv.appendChild(msgDiv);
-
-    if (isUserAtBottom) scrollToBottom();
-    if (messagesDiv.children.length > 100) messagesDiv.removeChild(messagesDiv.firstChild);
-  });
-
   window.scrollToBottom = function () {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   };
@@ -437,8 +469,11 @@
     sending = true;
     setTimeout(() => sending = false, 500);
 
+    // Always get latest username from /users
+    const latestUserName = userMap[userId] || userName;
     push(messagesRef, {
-      user: userName,
+      userId: userId,
+      user: latestUserName,
       text,
       timestamp: Date.now(),
       replyTo: replyTo
@@ -463,7 +498,6 @@
   const userListModal = document.getElementById("userListModal");
   const userListUl = document.getElementById("userList");
 
-  // Only show admin panel for certain username (change as needed)
   if (userName !== "gipicihuy") {
     adminBtn.style.display = "none";
   }
