@@ -1,4 +1,4 @@
-// DBnya klo di satuin nanti dipake org njir klo disebar
+// DBnya klo di satuin nanti dipake org njir klo disebar 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
 import {
   getDatabase,
