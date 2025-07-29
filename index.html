@@ -296,6 +296,13 @@
   const db = getDatabase(app);
   const messagesRef = ref(db, "chat");
 
+function sanitize(text) {
+    const div = document.createElement("div");
+    div.innerHTML = text;
+    div.querySelectorAll("iframe").forEach(i => i.remove());
+    return div.innerHTML;
+}
+  
   function stringToColor(str) {
     if (!str) return "#000";
     let hash = 0;
