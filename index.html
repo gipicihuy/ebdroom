@@ -72,6 +72,19 @@
             </button>
         </div>
         
+        <!-- Modal Preview Gambar -->
+        <div class="image-modal" id="imageModal" style="display:none">
+            <div class="image-modal-content">
+                <img id="modalImage" src="" alt="Preview Gambar">
+                <button class="modal-close" onclick="hideImageModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="modal-download" id="modalDownload" onclick="downloadImage()" title="Download Gambar">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+        
         <div class="avatar-modal" id="avatarModal" style="display:none">
             <div class="avatar-modal-content">
                 <h3>Ganti Foto Profil</h3>
