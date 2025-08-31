@@ -10,7 +10,7 @@
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
-    --admin-badge: linear-gradient(135deg, #f59e0b, #d97706);
+--admin-badge: linear-gradient(270deg, #ff0080, #ff8c00, #40e0d0, #7b68ee, #ff1493);
     --user-message: linear-gradient(135deg, #7b68ee, #6a5acd);
     --other-message: #2d2e3f;
     --border-radius: 16px;
@@ -310,12 +310,21 @@ body {
 
 .admin-badge {
     background: var(--admin-badge);
+    background-size: 400% 400%;       /* biar ada ruang buat animasi */
+    animation: rainbowShift 8s ease infinite;
     color: #fff;
     font-size: .65rem;
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 600;
     margin-left: 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4); /* biar tulisan lebih kebaca */
+}
+
+@keyframes rainbowShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .korupsi-badge {
