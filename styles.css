@@ -249,6 +249,13 @@ body {
     text-decoration: underline
 }
 
+@media (min-width:768px) {
+    .auth-buttons {
+        flex-direction: row;
+        max-width: 400px
+    }
+}
+
 @media (max-width:600px) {
     .auth-form {
         padding: 20px;
@@ -424,7 +431,8 @@ body {
     transition: var(--transition);
     max-width: calc(100% - 50px);
     font-size: 0.9rem;
-    word-break: break-all;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
 .message-content:hover {
@@ -705,16 +713,16 @@ body {
     word-wrap: break-word;
 }
 
-.message-reply-container .reply-sender {
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin-bottom: 2px;
-}
-
 .message.mine .message-reply-container {
     background-color: rgba(255, 255, 255, .1);
     border-left: 4px solid rgba(255, 255, 255, .7);
     color: #f0f0f5;
+}
+
+.message-reply-container .reply-sender {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
 }
 
 .input-area {
@@ -1072,13 +1080,6 @@ button:disabled {
     right: 10px;
     font-size: .8rem;
     color: var(--text-muted);
-}
-
-@media (min-width: 768px) {
-    .auth-buttons {
-        flex-direction: row;
-        max-width: 400px;
-    }
 }
 
 @media (max-width:600px) {
