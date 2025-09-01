@@ -30,18 +30,18 @@
                 <input type="email" id="loginEmail" placeholder="Email" required>
                 <input type="password" id="loginPassword" placeholder="Password" required>
                 <button id="emailLoginBtn" class="primary-btn" onclick="signInWithEmail()">Masuk</button>
-                
+
                 <div class="form-switch">
                     Belum punya akun? <a href="#" id="showRegister">Daftar sekarang</a>
                 </div>
-                
+
                 <div class="divider">Atau</div>
                 <button class="google-signin-btn" onclick="loginWithGoogle()">
                     <img src="google.svg" alt="Google Icon" class="google-icon-svg">
                     Masuk dengan Google
                 </button>
             </div>
-            
+
             <div class="auth-form" id="emailRegisterForm" style="display:none;">
                 <div class="form-header">
                     <h2>Buat Akun Baru</h2>
@@ -51,19 +51,19 @@
                 <input type="email" id="registerEmail" placeholder="Email" required>
                 <input type="password" id="registerPassword" placeholder="Password (min 6 karakter)" required>
                 <button id="emailRegisterBtn" class="primary-btn" onclick="signUpWithEmail()">Daftar</button>
-                
+
                 <div class="form-switch">
                     Sudah punya akun? <a href="#" id="showLogin">Masuk</a>
                 </div>
-                
+
                 <div class="divider">Atau</div>
-                
+
                  <button class="google-signin-btn" onclick="loginWithGoogle()">
                     <img src="https://cdn.nefusoft.cloud/00cMTj.svg" alt="Google Icon" class="google-icon-svg">Daftar dengan Google
                 </button>
             </div>
         </div>
-        
+
         <div class="header">
             <div class="header-left">
                 <img src="eberardos.jpg" alt="Logo">
@@ -85,21 +85,21 @@
                 </button>
             </div>
         </div>
-        
+
         <div class="messages" id="messages"></div>
         <div id="typingStatus"></div>
-        
+
         <div class="scroll-button" id="scrollBtn" onclick="scrollToBottom()">
             <i class="fas fa-chevron-down"></i>
         </div>
-        
+
         <div id="replyPreview">
             <b id="replyUser"></b>: <span id="replyText"></span>
             <button onclick="cancelReply()" title="Batal Balas">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        
+
         <div class="file-preview" id="filePreview">
             <span id="fileName"></span>
             <div id="filePreviewArea"></div>
@@ -107,7 +107,7 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        
+
         <div class="image-modal" id="imageModal" style="display:none">
             <div class="image-modal-content">
                 <img id="modalImage" src="" alt="Preview Gambar">
@@ -119,7 +119,7 @@
                 </button>
             </div>
         </div>
-        
+
         <div class="avatar-modal" id="avatarModal" style="display:none">
             <div class="avatar-modal-content">
                 <h3>Ganti Foto Profil</h3>
@@ -134,7 +134,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="name-modal" id="nameModal" style="display:none">
             <div class="name-modal-content">
                 <h3>Ganti Nama Tampilan</h3>
@@ -147,7 +147,18 @@
                 </div>
             </div>
         </div>
-        
+
+        <div class="custom-modal" id="confirmModal" style="display:none">
+            <div class="custom-modal-content">
+                <h3>Konfirmasi Keluar</h3>
+                <p>lu yakin mw keluar? lu bakal perlu login lagi untuk lanjut</p>
+                <div class="modal-buttons">
+                    <button id="cancelLogoutBtn" style="background:var(--bg-secondary)">Batal</button>
+                    <button id="confirmLogoutBtn" style="background:var(--danger)">Keluar</button>
+                </div>
+            </div>
+        </div>
+
         <div class="input-area">
             <div class="file-upload-btn" title="Upload File">
                 <i class="fas fa-paperclip"></i>

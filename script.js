@@ -216,16 +216,12 @@ window.signUpWithEmail = function() {
 };
 
 window.signOut = function() {
-    clearTimeout(typingTimeout);
-    auth.signOut()
-        .then(() => {
-            console.log("User signed out");
-            clearUserSpecificCache();
-            cleanupObjectUrls();
-        })
-        .catch((error) => {
-            console.error("Error during sign out:", error);
-        });
+    const user = auth.currentUser;
+    if (!user) {
+        // Handle case where user is not logged in
+        return;
+    }
+    document.getElementById("confirmModal").style.display = "flex";
 };
 
 window.showNameModal = function() {
@@ -521,6 +517,24 @@ document.addEventListener("DOMContentLoaded", function() {
         e.preventDefault();
         document.getElementById("emailRegisterForm").style.display = "none";
         document.getElementById("emailLoginForm").style.display = "block";
+    });
+
+    document.getElementById("confirmLogoutBtn").addEventListener("click", () => {
+        clearTimeout(typingTimeout);
+        auth.signOut()
+            .then(() => {
+                console.log("User signed out");
+                clearUserSpecificCache();
+                cleanupObjectUrls();
+            })
+            .catch((error) => {
+                console.error("Error during sign out:", error);
+            });
+        document.getElementById("confirmModal").style.display = "none";
+    });
+
+    document.getElementById("cancelLogoutBtn").addEventListener("click", () => {
+        document.getElementById("confirmModal").style.display = "none";
     });
 
     document.querySelector(".file-upload-btn").addEventListener("click", () => {
