@@ -176,7 +176,7 @@ window.signInWithEmail = function() {
         })
         .catch((error) => {
             console.error("Error during email sign in:", error);
-            alert("Terjadi error saat login: " + error.message);
+            alert("An error occurred while logging in: " + error.message);
         });
 };
 
