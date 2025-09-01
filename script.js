@@ -655,14 +655,19 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 }
 
+                let replyContent = '';
+                if (messageData.replyTo && !messageData.deleted) {
+                    replyContent = `<div class="message-reply-container"><span class="reply-sender">${escapeHtml(messageData.replyTo.user)}</span>: ${escapeHtml(messageData.replyTo.text)}</div>`;
+                }
+
                 let messageBody = '';
                 if (messageData.deleted) {
                     messageBody = "<em>Pesan dihapus</em>";
                 } else {
-                    messageBody = `${escapedText ? `<p>${escapedText}</p>` : ''}${fileContent ? `<div>${fileContent}</div>` : ''}`;
+                    messageBody = `${replyContent}${escapedText ? `<p>${escapedText}</p>` : ''}${fileContent ? `<div>${fileContent}</div>` : ''}`;
                 }
 
-                messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photoURL || "https://png.pngtree.com/png-vector/20250512/ourmid/pngtree-default-avatar-profile-icon-gray-placeholder-vector-png-image_16213764.png")}" alt="${escapeHtml(messageData.user)}" onerror="this.src='https://i.ibb.co/7W0Q6vz/default-avatar.png'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user)}${isAdminUser ? '<span class="admin-badge">ADMIN</span>' : ''}${isKoruptor ? '<span class="korupsi-badge">DPR</span>' : ''}${specialTitle ? '<span class="medan-badge">' + escapeHtml(specialTitle) + '</span>' : ''}</div>${messageData.replyTo && !messageData.deleted ? `<div style="font-size:0.8rem;color:var(--text-muted);background:rgba(255,255,255,.05);padding:6px;border-radius:8px;margin-bottom:6px"><b>${escapeHtml(messageData.replyTo.user)}</b>: ${escapeHtml(messageData.replyTo.text)}</div>` : ''}${messageBody}<div class="timestamp-container"><span class="timestamp">${time}</span>${!messageData.deleted ? `<button class="reply-btn" onclick="replyToMessage('${messageId}', event)" title="Balas Pesan"><i class="fas fa-reply"></i></button>` : ''}${(messageData.userId === user.uid || isAdmin(user.email)) && !messageData.deleted ? `<button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>` : ''}</div></div>`;
+                messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photoURL || "https://png.pngtree.com/png-vector/20250512/ourmid/pngtree-default-avatar-profile-icon-gray-placeholder-vector-png-image_16213764.png")}" alt="${escapeHtml(messageData.user)}" onerror="this.src='https://i.ibb.co/7W0Q6vz/default-avatar.png'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user)}${isAdminUser ? '<span class="admin-badge">ADMIN</span>' : ''}${isKoruptor ? '<span class="korupsi-badge">DPR</span>' : ''}${specialTitle ? '<span class="medan-badge">' + escapeHtml(specialTitle) + '</span>' : ''}</div>${messageBody}<div class="timestamp-container"><span class="timestamp">${time}</span>${!messageData.deleted ? `<button class="reply-btn" onclick="replyToMessage('${messageId}', event)" title="Balas Pesan"><i class="fas fa-reply"></i></button>` : ''}${(messageData.userId === user.uid || isAdmin(user.email)) && !messageData.deleted ? `<button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>` : ''}</div></div>`;
 
                 document.getElementById("messages").appendChild(messageElement);
                 messageElements[messageId] = messageElement;
