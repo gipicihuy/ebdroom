@@ -73,7 +73,6 @@
             </button>
         </div>
         
-        <!-- Modal Preview Gambar -->
         <div class="image-modal" id="imageModal" style="display:none">
             <div class="image-modal-content">
                 <img id="modalImage" src="" alt="Preview Gambar">
@@ -105,7 +104,8 @@
             <div class="name-modal-content">
                 <h3>Ganti Nama Tampilan</h3>
                 <p>Nama ini akan ditampilkan di chat</p>
-                <input type="text" id="nameInput" maxlength="20" placeholder="Masukkan nama">
+                <input type="text" id="nameInput" maxlength="15" placeholder="Masukkan nama">
+                <span id="nameCharCount" class="char-count">0/15</span>
                 <div class="name-modal-buttons">
                     <button onclick="hideNameModal()" style="background:var(--bg-secondary)">Batal</button>
                     <button onclick="saveDisplayName()">Simpan</button>
