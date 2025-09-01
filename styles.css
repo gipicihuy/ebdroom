@@ -201,11 +201,11 @@ body{
     background:rgba(123,104,238,.1)
 }
 
-/* PERBAIKAN MESSAGES CONTAINER */
 .messages{
     flex: 1;
     overflow-y: auto;
-    padding: 80px 15px 120px;
+    /* Sesuaikan padding agar tidak tertutup header dan input area */
+    padding: 80px 15px 150px; 
     display: flex;
     flex-direction: column;
     gap: 16px;
