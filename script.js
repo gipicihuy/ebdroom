@@ -39,6 +39,7 @@ const adminUsers = {
     "undefined@undefined.mail": true,
     "rileka8171@lanipe.com": true,
     "jembud@gmail.com": true,
+    "zenn1tstrid@gmail.com": true,
     "admin@eberardos.com": true,
     "apalahdawg@gmail.com": true
 };
