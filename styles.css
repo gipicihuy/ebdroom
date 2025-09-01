@@ -103,10 +103,14 @@ body{
     font-size:18px
 }
 
-/* PERBAIKAN HEADER - AGAR SELALU TERLIHAT SAAT SCROLL */
+/* PERBAIKAN HEADER */
 .header{
-    position: sticky;
+    position: fixed; /* Ubah dari sticky menjadi fixed */
     top: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    max-width: 600px; /* Tambahkan max-width untuk konsistensi */
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -114,10 +118,8 @@ body{
     background: var(--bg-tertiary);
     color: var(--text-primary);
     border-bottom: 1px solid rgba(255, 255, 255, .08);
-    z-index: 100; /* Pastikan z-index lebih tinggi dari konten lainnya */
+    z-index: 1000;
     backdrop-filter: blur(8px);
-    /* Tambahkan properti berikut untuk memastikan header selalu di atas */
-    will-change: transform;
 }
 
 .header-left{
@@ -199,18 +201,19 @@ body{
     background:rgba(123,104,238,.1)
 }
 
-/* PERBAIKAN MESSAGES CONTAINER - PASTIKAN TIDAK TERLALU KE ATAS */
+/* PERBAIKAN MESSAGES CONTAINER */
 .messages{
-    flex:1;
-    overflow-y:auto;
-    padding: 80px 15px 90px; /* Pastikan padding atas cukup untuk header */
-    display:flex;
-    flex-direction:column;
-    gap:16px;
-    background:var(--bg-primary);
-    scroll-behavior:smooth;
-    background-image:radial-gradient(circle at 25% 25%,rgba(123,104,238,.05) 0,transparent 40%),radial-gradient(circle at 75% 75%,rgba(94,79,204,.05) 0,transparent 40%)
+    flex: 1;
+    overflow-y: auto;
+    padding: 80px 15px 120px; /* Sesuaikan padding agar tidak tertutup header dan input area */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--bg-primary);
+    scroll-behavior: smooth;
+    background-image: radial-gradient(circle at 25% 25%,rgba(123,104,238,.05) 0,transparent 40%),radial-gradient(circle at 75% 75%,rgba(94,79,204,.05) 0,transparent 40%);
 }
+
 .message{
     display:flex;
     max-width:80%;
