@@ -22,11 +22,46 @@
 <body>
     <div class="chat-container">
         <div class="login-screen" id="loginScreen">
-            <h2>Eberardos Community Chat</h2>
-            <p>Silakan login dengan akun Google Anda untuk bergabung dalam percakapan</p>
-            <button class="google-btn" onclick="signInWithGoogle()">
-                <i class="fab fa-google google-icon"></i>Login dengan Google
-            </button>
+            <div class="auth-form" id="emailLoginForm">
+                <div class="form-header">
+                    <h2>Masuk ke Chat</h2>
+                    <p>Selamat datang kembali!</p>
+                </div>
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button id="emailLoginBtn" class="primary-btn" onclick="signInWithEmail()">Masuk</button>
+                
+                <div class="form-switch">
+                    Belum punya akun? <a href="#" id="showRegister">Daftar sekarang</a>
+                </div>
+                
+                <div class="divider">Atau</div>
+                <button class="google-signin-btn" onclick="loginWithGoogle()">
+                    <img src="https://cdn.nefusoft.cloud/00cMTj.svg" alt="Google Icon" class="google-icon-svg">
+                    Masuk dengan Google
+                </button>
+            </div>
+            
+            <div class="auth-form" id="emailRegisterForm" style="display:none;">
+                <div class="form-header">
+                    <h2>Buat Akun Baru</h2>
+                    <p>Bergabunglah dengan komunitas kami</p>
+                </div>
+                <input type="text" id="registerName" placeholder="Nama Tampilan" required>
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Password (min 6 karakter)" required>
+                <button id="emailRegisterBtn" class="primary-btn" onclick="signUpWithEmail()">Daftar</button>
+                
+                <div class="form-switch">
+                    Sudah punya akun? <a href="#" id="showLogin">Masuk</a>
+                </div>
+                
+                <div class="divider">Atau</div>
+                
+                 <button class="google-signin-btn" onclick="loginWithGoogle()">
+                    <img src="https://cdn.nefusoft.cloud/00cMTj.svg" alt="Google Icon" class="google-icon-svg">Daftar dengan Google
+                </button>
+            </div>
         </div>
         
         <div class="header">
