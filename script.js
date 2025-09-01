@@ -634,7 +634,7 @@ auth.onAuthStateChanged((user) => {
                     <div class="user" style="color:${userColor}">
                         ${escapeHtml(messageData.user)}
                         ${isAdminUser ? '<span class="admin-badge">ADMIN</span>' : ''}
-                        ${isKoruptor ? '<span class="korupsi-badge">KORUPTOR</span>' : ''}
+                        ${isKoruptor ? '<span class="korupsi-badge">DPR</span>' : ''}
                         ${specialTitle ? '<span class="sepuh-badge">' + specialTitle + '</span>' : ''}
                     </div>
                     ${messageData.replyTo && !messageData.deleted ? `
