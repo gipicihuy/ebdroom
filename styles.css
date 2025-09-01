@@ -1172,3 +1172,23 @@ button:disabled {
     padding: 10px 20px;
     width: 100px
 }
+}
+.date-header {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    position: sticky;
+    top: 60px;
+    z-index: 500;
+    user-select: none;
+    pointer-events: none;
+}
+
+.date-header span {
+    background: var(--bg-tertiary);
+    padding: 6px 12px;
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+    font-weight: 500;
+}

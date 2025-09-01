@@ -57,6 +57,7 @@ let typingTimeout;
 let currentUser = null;
 let selectedAvatar = null;
 const objectUrls = new Set();
+let lastMessageDate = null;
 
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -150,6 +151,26 @@ function previewFile(file) {
         link.textContent = "🔗 Pratinjau PDF";
         link.target = "_blank";
         previewArea.appendChild(link);
+    }
+}
+
+function formatDateHeader(timestamp) {
+    const now = new Date();
+    const messageDate = new Date(timestamp);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    if (messageDate >= today) {
+        return "Hari ini";
+    } else if (messageDate >= yesterday) {
+        return "Kemarin";
+    } else {
+        return messageDate.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        });
     }
 }
 
@@ -591,6 +612,8 @@ document.addEventListener("DOMContentLoaded", function() {
         clearTimeout(typingTimeout);
         if (user) {
             currentUser = user;
+            // Reset the date tracker on login
+            lastMessageDate = null;
             loginScreen.style.display = "none";
             userInfo.style.display = "flex";
             userAvatar.src = getAvatarUrl() || user.photoURL;
@@ -636,6 +659,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (messageData.fileUrl) {
                     messageElement.classList.add("file-message");
                 }
+
+                // Date Header Logic
+                const messageDate = new Date(messageData.timestamp).toDateString();
+                if (messageDate !== lastMessageDate) {
+                    const dateHeader = document.createElement("div");
+                    dateHeader.className = "date-header";
+                    dateHeader.innerHTML = `<span>${formatDateHeader(messageData.timestamp)}</span>`;
+                    document.getElementById("messages").appendChild(dateHeader);
+                    lastMessageDate = messageDate;
+                }
+                
                 const time = new Date(messageData.timestamp || Date.now()).toLocaleTimeString("id-ID", {
                     hour: "2-digit",
                     minute: "2-digit"
