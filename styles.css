@@ -423,7 +423,8 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
     transition: var(--transition);
     max-width: calc(100% - 50px);
-    font-size: 0.9rem
+    font-size: 0.9rem;
+    word-break: break-all;
 }
 
 .message-content:hover {
