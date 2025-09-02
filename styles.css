@@ -1172,15 +1172,14 @@ button:disabled {
     padding: 10px 20px;
     width: 100px
 }
-}
+/* Perbaikan untuk date-header */
 .date-header {
     text-align: center;
-    margin: 20px 0;
+    margin: 15px 0;
     font-size: 0.8rem;
     color: var(--text-secondary);
-    position: sticky;
-    top: 60px;
-    z-index: 500;
+    position: relative;
+    z-index: 10;
     user-select: none;
     pointer-events: none;
 }
@@ -1191,4 +1190,5 @@ button:disabled {
     border-radius: var(--border-radius-sm);
     box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
     font-weight: 500;
+    display: inline-block;
 }
