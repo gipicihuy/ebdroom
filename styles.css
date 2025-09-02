@@ -24,6 +24,17 @@
 ::before {
     box-sizing: border-box
 }
+* {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+*:focus,
+*:active,
+*:hover {
+  outline: none !important;
+  box-shadow: none !important;
+}
 
 body,
 html {
