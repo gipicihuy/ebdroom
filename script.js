@@ -397,6 +397,7 @@ window.replyToMessage = function(messageId, event) {
             replyTo = {
                 messageId: messageId,
                 userId: messageData.userId,
+                user: messageData.user,
                 text: messageData.text
             };
             document.getElementById("replyPreview").style.display = "flex";
@@ -448,7 +449,11 @@ window.sendMessage = async function() {
         messageData.fileType = fileType;
     }
     if (replyTo) {
-        messageData.replyTo = replyTo;
+        messageData.replyTo = {
+            messageId: replyTo.messageId,
+            user: replyTo.user,
+            text: replyTo.text
+        };
     }
     messagesRef.push(messageData).then(() => {
         messageInput.value = "";
@@ -642,15 +647,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 let replyContent = '';
                 if (messageData.replyTo && !messageData.deleted) {
-                    const originalMessageElement = document.getElementById(`message-${messageData.replyTo.messageId}`);
-                    let replyUserName = "Pengguna tidak dikenal";
-                    if (originalMessageElement) {
-                        const userNameSpan = originalMessageElement.querySelector('.user');
-                        if (userNameSpan) {
-                            replyUserName = userNameSpan.textContent.split(' ')[0];
-                        }
-                    }
-                    replyContent = `<div class="message-reply-container"><span class="reply-sender">${escapeHtml(replyUserName)}</span>: ${escapeHtml(messageData.replyTo.text)}</div>`;
+                    replyContent = `<div class="message-reply-container"><span class="reply-sender">${escapeHtml(messageData.replyTo.user)}</span>: ${escapeHtml(messageData.replyTo.text)}</div>`;
                 }
                 let messageBody = '';
                 if (messageData.deleted) {
@@ -658,7 +655,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 } else {
                     messageBody = `${replyContent}${escapedText?`<p>${escapedText}</p>`:''}${fileContent?`<div>${fileContent}</div>`:''}`;
                 }
-                messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photoURL||"https://png.pngtree.com/png-vector/20250512/ourmid/pngtree-default-avatar-profile-icon-gray-placeholder-vector-png-image_16213764.png")}" alt="${escapeHtml(messageData.user)}" onerror="this.src='https://i.ibb.co/7W0Q6vz/default-avatar.png'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user)}${isAdminUser?'<span class="admin-badge">ADMIN</span>':''}${isKoruptor?'<span class="korupsi-badge">DPR</span>':''}${specialTitle?'<span class="medan-badge">'+escapeHtml(specialTitle)+'</span>':''}</div>${messageBody}<div class="timestamp-container"><span class="timestamp">${time}</span>${!messageData.deleted?`<button class="reply-btn" onclick="replyToMessage('${messageId}', event)" title="Balas Pesan"><i class="fas fa-reply"></i></button>`:''}${(messageData.userId===user.uid||isAdmin(user.email))&&!messageData.deleted?`<button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>`:''}</div></div>`;
+                messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photoURL||"https://png.pngtree.com/png-vector/20250512/ourmid/pngtree-default-avatar-profile-icon-gray-placeholder-vector-png-image_16213764.png")}" alt="${escapeHtml(messageData.user)}" onerror="this.src='https://i.ibb.co/7W0Q6vz/default-avatar.png'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user)}${isAdminUser?'<span class="admin-badge">ADMIN</span>':''}${isKoruptor?'<span class="korupsi-badge">DPR</span>':''}${specialTitle?'<span class="medan-badge">'+escapeHtml(specialTitle)+'</span>':''}</div>${messageBody}<div class="timestamp-container"><span class="timestamp">${time}</span>${!messageData.deleted?`<button class=\"reply-btn\" onclick=\"replyToMessage('${messageId}', event)\" title=\"Balas Pesan\"><i class=\"fas fa-reply\"></i></button>`:''}${(messageData.userId===user.uid||isAdmin(user.email))&&!messageData.deleted?`<button class=\"delete-btn\" onclick=\"deleteMessage('${messageId}')\" title=\"Hapus Pesan\"><i class=\"fas fa-trash\"></i></button>`:''}</div></div>`;
                 document.getElementById("messages").appendChild(messageElement);
                 messageElements[messageId] = messageElement;
                 if (isUserAtBottom) {
