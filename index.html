@@ -1,10 +1,180 @@
-<main class="bsod container">
-  <h1 class="neg title"><span class="bg">Error - 404</span></h1>
-  <p>An error has occured, to continue:</p>
-  <p>* Return to our homepage.<br />
-  * Send us an e-mail about this error and try later.</p>
-  <nav class="nav">
-    <a href="#" class="link">index</a>&nbsp;|&nbsp;<a href="#" class="link">webmaster</a>
-  </nav>
-   <link rel="stylesheet" href="styles.css">
-</main>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Eberardos Room Chat</title>
+    <link rel="icon" href="https://i.ibb.co/xcqmzxt/20250818-192240.jpg" type="image/jpeg">
+    <meta property="og:title" content="Eberardos Room Chat">
+    <meta property="og:description" content="Join sini bro!">
+    <meta property="og:image" content="https://i.ibb.co/xcqmzxt/20250818-192240.jpg">
+    <meta property="og:url" content="https://ebdroomchat.vercel.app/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chat Komunitas">
+    <meta name="twitter:description" content="Join sini bro!">
+    <meta name="twitter:image" content="https://i.ibb.co/xcqmzxt/20250818-192240.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nosifer&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="login-screen" id="loginScreen">
+            <div class="auth-form" id="emailLoginForm">
+                <div class="form-header">
+                    <h2>Masuk ke Chat</h2>
+                    <p>Selamat datang kembali!</p>
+                </div>
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button id="emailLoginBtn" class="primary-btn" onclick="signInWithEmail()">Masuk</button>
+
+                <div class="form-switch">
+                    Belum punya akun? <a href="#" id="showRegister">Daftar sekarang</a>
+                </div>
+
+                <div class="divider">Atau</div>
+                <button class="google-signin-btn" onclick="loginWithGoogle()">
+                    <img src="google.svg" alt="Google Icon" class="google-icon-svg">
+                    Masuk dengan Google
+                </button>
+            </div>
+
+            <div class="auth-form" id="emailRegisterForm" style="display:none;">
+                <div class="form-header">
+                    <h2>Buat Akun Baru</h2>
+                    <p>Bergabunglah dengan komunitas kami</p>
+                </div>
+                <input type="text" id="registerName" placeholder="Nama Tampilan" maxlength="20" required>
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Password (min 6 karakter)" required>
+                <button id="emailRegisterBtn" class="primary-btn" onclick="signUpWithEmail()">Daftar</button>
+
+                <div class="form-switch">
+                    Sudah punya akun? <a href="#" id="showLogin">Masuk</a>
+                </div>
+
+                <div class="divider">Atau</div>
+
+                 <button class="google-signin-btn" onclick="loginWithGoogle()">
+                    <img src="google.svg" alt="Google Icon" class="google-icon-svg">Daftar dengan Google
+                </button>
+            </div>
+        </div>
+
+        <div class="header">
+            <div class="header-left">
+                <img src="eberardos.jpg" alt="Logo">
+                <h3>EBERARDOS</h3>
+            </div>
+            <div class="user-info" id="userInfo" style="display:none">
+                <div class="avatar-container">
+                    <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                    <button class="avatar-change-btn" onclick="showAvatarModal()" title="Ganti Foto Profil">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <span id="userName"></span>
+                <button class="edit-btn" onclick="showNameModal()" title="Ganti Nama">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button class="logout-btn" onclick="signOut()">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+        <div id="typingStatus"></div>
+
+        <div class="scroll-button" id="scrollBtn" onclick="scrollToBottom()">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+
+        <div id="replyPreview">
+            <b id="replyUser"></b>: <span id="replyText"></span>
+            <button onclick="cancelReply()" title="Batal Balas">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="file-preview" id="filePreview">
+            <span id="fileName"></span>
+            <div id="filePreviewArea"></div>
+            <button onclick="cancelUpload()" title="Batal Upload">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="image-modal" id="imageModal" style="display:none">
+            <div class="image-modal-content">
+                <img id="modalImage" src="" alt="Preview Gambar">
+                <button class="modal-close" onclick="hideImageModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="modal-download" id="modalDownload" onclick="downloadImage()" title="Download Gambar">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="avatar-modal" id="avatarModal" style="display:none">
+            <div class="avatar-modal-content">
+                <h3>Ganti Foto Profil</h3>
+                <p>Pilih foto untuk profil Anda</p>
+                <div class="avatar-preview-container">
+                    <img id="avatarPreview" src="" alt="Preview Avatar">
+                </div>
+                <input type="file" id="avatarInput" accept="image/*">
+                <div class="avatar-modal-buttons">
+                    <button onclick="hideAvatarModal()" style="background:var(--bg-secondary)">Batal</button>
+                    <button onclick="saveAvatar()">Simpan</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="name-modal" id="nameModal" style="display:none">
+            <div class="name-modal-content">
+                <h3>Ganti Nama Tampilan</h3>
+                <p>Nama ini akan ditampilkan di chat</p>
+                <input type="text" id="nameInput" maxlength="20" placeholder="Masukkan nama">
+                <span id="nameCharCount" class="char-count">0/20</span>
+                <div class="name-modal-buttons">
+                    <button onclick="hideNameModal()" style="background:var(--bg-secondary)">Batal</button>
+                    <button onclick="saveDisplayName()">Simpan</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="custom-modal" id="confirmModal" style="display:none">
+            <div class="custom-modal-content">
+                <h3>Konfirmasi Keluar</h3>
+                <p>lu yakin mw keluar? lu bakal perlu login lagi untuk lanjut</p>
+                <div class="modal-buttons">
+                    <button id="cancelLogoutBtn" style="background:var(--bg-secondary)">Batal</button>
+                    <button id="confirmLogoutBtn" style="background:var(--danger)">Keluar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="file-upload-btn" title="Upload File">
+                <i class="fas fa-paperclip"></i>
+                <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(event)" accept="*/*">
+            </div>
+            <textarea id="messageInput" placeholder="Ketik pesan..." disabled></textarea>
+            <button onclick="sendMessage()" title="Kirim Pesan" disabled>
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
