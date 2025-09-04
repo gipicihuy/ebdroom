@@ -39,7 +39,7 @@ const adminUsers = {
     "admin@eberardos.com": true,
     "apalahdawg@gmail.com": true,
 };
-const specialUsers = { "4AMUSgR0pLSndwsrTUzazaXXybl2": "MEDAN BESI" };
+const specialUsers = { "4AMUSgR0pLSndwsrTUzazaXXybl2": "Raja Iblis" };
 let messageElements = {};
 let selectedFile = null;
 let replyTo = null;
@@ -613,7 +613,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const userColor = stringToColor(messageData.user);
                 const isAdminUser = isAdmin(messageData.email);
                 const specialTitle = getSpecialTitle(messageData.userId);
-                const isKoruptor = ["lwklowkwkwk@gmail.com", "ryanzxd86@gmail.com", "commentfotocik@gmail.com", "commentcik@gmail.com"].includes(messageData.email);
+                const isKoruptor = ["lwklowkwkwk@gmail.com", "commentfotocik@gmail.com", "commentcik@gmail.com"].includes(messageData.email);
                 let fileContent = "";
                 if (messageData.fileUrl) {
                     if (messageData.fileType && messageData.fileType.startsWith("image")) {
