@@ -940,8 +940,8 @@ button:disabled {
 .file-message video {
     all: unset;
     display: block;
-    width: 400% !important;
-    max-height: 350px !important;
+    width: 100% !important;
+    max-height: 370px !important;
     border-radius: var(--border-radius-sm) !important;
     margin-top: 8px !important;
     cursor: pointer !important;
