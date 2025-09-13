@@ -30,7 +30,7 @@ const nameModal = document.getElementById("nameModal");
 const nameInput = document.getElementById("nameInput");
 const nameCharCount = document.getElementById("nameCharCount");
 const adminUsers = {
-    "dnzobro@gmail.com": true,
+    "jembud@gmail.com": true,
     "rafiqmarwan80@gmail.com": true,
     "undefined@undefined.mail": true,
     "rileka8171@lanipe.com": true,
