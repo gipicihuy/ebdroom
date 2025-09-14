@@ -14,7 +14,9 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
-const { createClient } = supabase;
+const {
+    createClient
+} = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const messagesRef = db.ref("chat");
 const loginScreen = document.getElementById("loginScreen");
@@ -39,7 +41,10 @@ const adminUsers = {
     "admin@eberardos.com": true,
     "apalahdawg@gmail.com": true,
 };
-const specialUsers = { "4AMUSgR0pLSndwsrTUzazaXXybl2": "Raja Iblis" };
+const specialUsers = {
+    "4AMUSgR0pLSndwsrTUzazaXXybl2": "Raja Iblis",
+    "UYxmj0pZPhh6bvbUTa89SH8UeW42": "Official"
+};
 let messageElements = {};
 let selectedFile = null;
 let replyTo = null;
@@ -50,12 +55,20 @@ let currentUser = null;
 let selectedAvatar = null;
 const objectUrls = new Set();
 let lastMessageDate = null;
+
 function escapeHtml(text) {
-    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
-    return text.replace(/[&<>"']/g, function (m) {
+    const map = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    };
+    return text.replace(/[&<>"']/g, function(m) {
         return map[m];
     });
 }
+
 function stringToColor(str) {
     if (!str) return "#000";
     const safeStr = escapeHtml(str);
@@ -66,45 +79,35 @@ function stringToColor(str) {
     const hue = Math.abs(hash) % 360;
     return `hsl(${hue},65%,50%)`;
 }
+
 function isAdmin(email) {
     return email && adminUsers[email] === true;
 }
+
 function getSpecialTitle(userId) {
     return specialUsers[userId] || "";
 }
+
+// Fungsi getDisplayName dan getAvatarUrl diperbarui untuk mengambil data langsung dari currentUser
 function getDisplayName() {
-    if (!currentUser) return "";
-    const savedName = localStorage.getItem(`displayName_${currentUser.uid}`);
-    return savedName || currentUser.displayName || "";
+    return currentUser ? currentUser.displayName || "" : "";
 }
-function setDisplayName(name) {
-    if (currentUser) {
-        localStorage.setItem(`displayName_${currentUser.uid}`, name);
-    }
-}
+
 function getAvatarUrl() {
-    if (!currentUser) return "";
-    const savedAvatar = localStorage.getItem(`avatarUrl_${currentUser.uid}`);
-    return savedAvatar || currentUser.photoURL || "";
+    return currentUser ? currentUser.photoURL || "" : "";
 }
-function setAvatarUrl(url) {
-    if (currentUser) {
-        localStorage.setItem(`avatarUrl_${currentUser.uid}`, url);
-    }
-}
+
 function clearUserSpecificCache() {
-    const user = auth.currentUser;
-    if (user) {
-        localStorage.removeItem(`displayName_${user.uid}`);
-        localStorage.removeItem(`avatarUrl_${user.uid}`);
-    }
+    // Karena kita tidak lagi menggunakan localStorage, fungsi ini tidak diperlukan.
 }
+
 function cleanupObjectUrls() {
     objectUrls.forEach((url) => {
         URL.revokeObjectURL(url);
     });
     objectUrls.clear();
 }
+
 function previewFile(file) {
     const previewArea = document.getElementById("filePreviewArea");
     previewArea.innerHTML = "";
@@ -131,11 +134,12 @@ function previewFile(file) {
         const objectUrl = URL.createObjectURL(file);
         objectUrls.add(objectUrl);
         link.href = objectUrl;
-        link.textContent = "ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬â€ Pratinjau PDF";
+        link.textContent = "ÃƒÂ°Ã…Â¸Ã¢â‚¬Â Ã¢â‚¬â€  Pratinjau PDF";
         link.target = "_blank";
         previewArea.appendChild(link);
     }
 }
+
 function formatDateHeader(timestamp) {
     const now = new Date();
     const messageDate = new Date(timestamp);
@@ -147,10 +151,14 @@ function formatDateHeader(timestamp) {
     } else if (messageDate >= yesterday) {
         return "Kemarin";
     } else {
-        return messageDate.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+        return messageDate.toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        });
     }
 }
-window.loginWithGoogle = function () {
+window.loginWithGoogle = function() {
     auth.signInWithPopup(provider)
         .then((result) => {
             console.log("User signed in:", result.user);
@@ -160,7 +168,7 @@ window.loginWithGoogle = function () {
             alert("Terjadi error saat login. Silakan coba lagi.");
         });
 };
-window.signInWithEmail = function () {
+window.signInWithEmail = function() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
     if (!email || !password) {
@@ -176,7 +184,7 @@ window.signInWithEmail = function () {
             alert("An error occurred while logging in: " + error.message);
         });
 };
-window.signUpWithEmail = function () {
+window.signUpWithEmail = function() {
     const name = document.getElementById("registerName").value;
     const email = document.getElementById("registerEmail").value;
     const password = document.getElementById("registerPassword").value;
@@ -194,7 +202,9 @@ window.signUpWithEmail = function () {
     }
     auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
-            return userCredential.user.updateProfile({ displayName: name });
+            return userCredential.user.updateProfile({
+                displayName: name
+            });
         })
         .then(() => {
             console.log("User registered:", auth.currentUser);
@@ -204,28 +214,34 @@ window.signUpWithEmail = function () {
             alert("Terjadi error saat pendaftaran: " + error.message);
         });
 };
-window.signOut = function () {
+window.signOut = function() {
     const user = auth.currentUser;
     if (!user) {
         return;
     }
     document.getElementById("confirmModal").style.display = "flex";
 };
-window.showNameModal = function () {
+window.showNameModal = function() {
     nameInput.value = getDisplayName() || "";
     nameModal.style.display = "flex";
     nameInput.focus();
     updateNameCharCount();
 };
-window.hideNameModal = function () {
+window.hideNameModal = function() {
     nameModal.style.display = "none";
 };
-window.saveDisplayName = function () {
+
+// Perbaikan: Fungsi saveDisplayName sekarang memperbarui profil Firebase
+window.saveDisplayName = function() {
     const newName = nameInput.value.trim();
-    if (newName) {
-        setDisplayName(newName);
-        userName.textContent = newName;
-        if (currentUser) {
+    if (newName && currentUser) {
+        currentUser.updateProfile({
+            displayName: newName
+        }).then(() => {
+            console.log("Display name updated successfully.");
+            // Perbarui UI secara langsung
+            userName.textContent = newName;
+            // Perbarui nama di semua pesan yang sudah ada
             const userId = currentUser.uid;
             messagesRef
                 .orderByChild("userId")
@@ -241,14 +257,18 @@ window.saveDisplayName = function () {
                             console.error("Error updating messages:", error);
                         });
                 });
-        }
-        nameModal.style.display = "none";
+            nameModal.style.display = "none";
+        }).catch((error) => {
+            console.error("Error updating display name:", error);
+            alert("Gagal menyimpan nama: " + error.message);
+        });
     }
 };
-window.showAvatarModal = function () {
-    avatarPreview.src = userAvatar.src;
+
+window.showAvatarModal = function() {
+    avatarPreview.src = getAvatarUrl() || "default-avatar.jpg";
     avatarModal.style.display = "flex";
-    avatarInput.onchange = function (event) {
+    avatarInput.onchange = function(event) {
         const file = event.target.files[0];
         if (!file) return;
         if (!file.type.startsWith("image/")) {
@@ -261,54 +281,64 @@ window.showAvatarModal = function () {
         }
         selectedAvatar = file;
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = function(e) {
             avatarPreview.src = e.target.result;
         };
         reader.readAsDataURL(file);
     };
 };
-window.hideAvatarModal = function () {
+window.hideAvatarModal = function() {
     avatarModal.style.display = "none";
     selectedAvatar = null;
     avatarInput.value = "";
 };
-window.saveAvatar = async function () {
-    if (!selectedAvatar) {
+
+// Perbaikan: Fungsi saveAvatar sekarang memperbarui profil Firebase
+window.saveAvatar = async function() {
+    if (!selectedAvatar || !currentUser) {
         alert("Pilih gambar terlebih dahulu!");
         return;
     }
     try {
         const fileName = `${Date.now()}_${selectedAvatar.name.replace(/\s+/g, "_")}`;
-        const { data, error } = await supabaseClient.storage.from("chat-avatars").upload(fileName, selectedAvatar);
+        const {
+            data,
+            error
+        } = await supabaseClient.storage.from("chat-avatars").upload(fileName, selectedAvatar);
         if (error) throw new Error(error.message);
-        const { data: urlData } = supabaseClient.storage.from("chat-avatars").getPublicUrl(data.path);
+        const {
+            data: urlData
+        } = supabaseClient.storage.from("chat-avatars").getPublicUrl(data.path);
         const avatarUrl = urlData.publicUrl;
-        setAvatarUrl(avatarUrl);
+        // Perbarui profil Firebase
+        await currentUser.updateProfile({
+            photoURL: avatarUrl
+        });
+        console.log("Avatar updated successfully.");
+        // Perbarui UI dan pesan-pesan yang sudah ada
         userAvatar.src = avatarUrl;
-        if (currentUser) {
-            const userId = currentUser.uid;
-            messagesRef
-                .orderByChild("userId")
-                .equalTo(userId)
-                .once("value", (snapshot) => {
-                    const updates = {};
-                    snapshot.forEach((childSnapshot) => {
-                        updates[`chat/${childSnapshot.key}/photoURL`] = avatarUrl;
-                    });
-                    db.ref()
-                        .update(updates)
-                        .catch((error) => {
-                            console.error("Error updating message avatar:", error);
-                        });
+        const userId = currentUser.uid;
+        messagesRef
+            .orderByChild("userId")
+            .equalTo(userId)
+            .once("value", (snapshot) => {
+                const updates = {};
+                snapshot.forEach((childSnapshot) => {
+                    updates[`chat/${childSnapshot.key}/photoURL`] = avatarUrl;
                 });
-        }
+                db.ref()
+                    .update(updates)
+                    .catch((error) => {
+                        console.error("Error updating message avatar:", error);
+                    });
+            });
         hideAvatarModal();
     } catch (error) {
         console.error("Error uploading avatar:", error);
         alert("Gagal mengupload avatar: " + error.message);
     }
 };
-window.handleFileSelect = function (event) {
+window.handleFileSelect = function(event) {
     const file = event.target.files[0];
     if (!file) return;
     if (file.size > 50 * 1024 * 1024) {
@@ -320,18 +350,23 @@ window.handleFileSelect = function (event) {
     document.getElementById("filePreview").style.display = "flex";
     previewFile(file);
 };
-window.cancelUpload = function () {
+window.cancelUpload = function() {
     cleanupObjectUrls();
     selectedFile = null;
     document.getElementById("fileInput").value = "";
     document.getElementById("filePreview").style.display = "none";
 };
-window.uploadToSupabase = async function (file) {
+window.uploadToSupabase = async function(file) {
     try {
         const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-        const { data, error } = await supabaseClient.storage.from("chat-files").upload(fileName, file);
+        const {
+            data,
+            error
+        } = await supabaseClient.storage.from("chat-files").upload(fileName, file);
         if (error) throw new Error(error.message);
-        const { data: urlData } = supabaseClient.storage.from("chat-files").getPublicUrl(data.path);
+        const {
+            data: urlData
+        } = supabaseClient.storage.from("chat-files").getPublicUrl(data.path);
         return urlData.publicUrl;
     } catch (error) {
         console.error("Error uploading to Supabase:", error);
@@ -339,7 +374,7 @@ window.uploadToSupabase = async function (file) {
         return null;
     }
 };
-window.deleteMessage = function (messageId) {
+window.deleteMessage = function(messageId) {
     if (!confirm("Hapus pesan ini?")) return;
     const user = auth.currentUser;
     if (!user) {
@@ -350,7 +385,13 @@ window.deleteMessage = function (messageId) {
     messageRef.once("value", (snapshot) => {
         const messageData = snapshot.val();
         if (messageData && (messageData.userId === user.uid || isAdmin(user.email))) {
-            messageRef.update({ deleted: true, text: "", fileUrl: "", fileName: "", fileType: "" }).catch((error) => {
+            messageRef.update({
+                deleted: true,
+                text: "",
+                fileUrl: "",
+                fileName: "",
+                fileType: ""
+            }).catch((error) => {
                 console.error("Error deleting message:", error);
                 alert("Gagal menghapus pesan!");
             });
@@ -359,7 +400,7 @@ window.deleteMessage = function (messageId) {
         }
     });
 };
-window.replyToMessage = function (messageId, event) {
+window.replyToMessage = function(messageId, event) {
     if (event) {
         event.stopPropagation();
     }
@@ -367,7 +408,11 @@ window.replyToMessage = function (messageId, event) {
     messageRef.once("value", (snapshot) => {
         const messageData = snapshot.val();
         if (messageData) {
-            replyTo = { messageId: messageId, user: messageData.user, text: messageData.text };
+            replyTo = {
+                messageId: messageId,
+                user: messageData.user,
+                text: messageData.text
+            };
             document.getElementById("replyPreview").style.display = "flex";
             document.getElementById("replyUser").textContent = messageData.user;
             document.getElementById("replyText").textContent = messageData.text.length > 30 ? messageData.text.substring(0, 30) + "..." : messageData.text;
@@ -375,7 +420,7 @@ window.replyToMessage = function (messageId, event) {
         }
     });
 };
-window.sendMessage = async function () {
+window.sendMessage = async function() {
     if (sending) return;
     sending = true;
     const user = auth.currentUser;
@@ -403,7 +448,15 @@ window.sendMessage = async function () {
         fileName = selectedFile.name;
         fileType = selectedFile.type;
     }
-    const messageData = { userId: user.uid, user: getDisplayName() || user.displayName, email: user.email, photoURL: getAvatarUrl() || user.photoURL, text: text, timestamp: Date.now() };
+    // Menggunakan user.displayName dan user.photoURL yang sudah disinkronkan oleh Firebase
+    const messageData = {
+        userId: user.uid,
+        user: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        text: text,
+        timestamp: Date.now()
+    };
     if (fileUrl) {
         messageData.fileUrl = fileUrl;
         messageData.fileName = fileName;
@@ -422,7 +475,11 @@ window.sendMessage = async function () {
             document.getElementById("fileInput").value = "";
             replyTo = null;
             document.getElementById("replyPreview").style.display = "none";
-            db.ref("typing/" + user.uid).set({ user: user.displayName, typing: false, timestamp: Date.now() });
+            db.ref("typing/" + user.uid).set({
+                user: user.displayName,
+                typing: false,
+                timestamp: Date.now()
+            });
             setTimeout(() => {
                 scrollToBottom();
             }, 100);
@@ -435,63 +492,58 @@ window.sendMessage = async function () {
             sending = false;
         });
 };
-window.cancelReply = function () {
+window.cancelReply = function() {
     replyTo = null;
     document.getElementById("replyPreview").style.display = "none";
 };
-window.scrollToBottom = function () {
+window.scrollToBottom = function() {
     const messagesContainer = document.getElementById("messages");
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
-window.showImageModal = function (imageUrl) {
+window.showImageModal = function(imageUrl) {
     const modal = document.getElementById("imageModal");
     const modalImage = document.getElementById("modalImage");
     const downloadBtn = document.getElementById("modalDownload");
     modalImage.src = imageUrl;
-    downloadBtn.onclick = function () {
+    downloadBtn.onclick = function() {
         window.open(imageUrl, "_blank");
     };
     modal.style.display = "flex";
 };
-// Tambahkan fungsi ini di script.js
 window.showVideoModal = function(videoUrl) {
     const modal = document.getElementById("videoModal");
     const modalVideo = document.getElementById("modalVideo");
     const downloadBtn = document.getElementById("modalVideoDownload");
-    
     modalVideo.src = videoUrl;
     downloadBtn.onclick = function() {
         window.open(videoUrl, "_blank");
     };
     modal.style.display = "flex";
 };
-
 window.hideVideoModal = function() {
     const modal = document.getElementById("videoModal");
     const modalVideo = document.getElementById("modalVideo");
     modalVideo.pause();
     modal.style.display = "none";
 };
-
 window.downloadVideo = function() {
     const videoUrl = document.getElementById("modalVideo").src;
     window.open(videoUrl, "_blank");
 };
-
-window.hideImageModal = function () {
+window.hideImageModal = function() {
     document.getElementById("imageModal").style.display = "none";
 };
-window.downloadImage = function () {
+window.downloadImage = function() {
     const imageUrl = document.getElementById("modalImage").src;
     window.open(imageUrl, "_blank");
 };
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("showRegister").addEventListener("click", function (e) {
+document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("showRegister").addEventListener("click", function(e) {
         e.preventDefault();
         document.getElementById("emailLoginForm").style.display = "none";
         document.getElementById("emailRegisterForm").style.display = "block";
     });
-    document.getElementById("showLogin").addEventListener("click", function (e) {
+    document.getElementById("showLogin").addEventListener("click", function(e) {
         e.preventDefault();
         document.getElementById("emailRegisterForm").style.display = "none";
         document.getElementById("emailLoginForm").style.display = "block";
@@ -501,8 +553,6 @@ document.addEventListener("DOMContentLoaded", function () {
         auth.signOut()
             .then(() => {
                 console.log("User signed out");
-                clearUserSpecificCache();
-                cleanupObjectUrls();
             })
             .catch((error) => {
                 console.error("Error during sign out:", error);
@@ -520,10 +570,18 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!user) return;
         messageInput.style.height = "auto";
         messageInput.style.height = messageInput.scrollHeight + "px";
-        db.ref("typing/" + user.uid).set({ user: user.displayName, typing: true, timestamp: Date.now() });
+        db.ref("typing/" + user.uid).set({
+            user: user.displayName,
+            typing: true,
+            timestamp: Date.now()
+        });
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
-            db.ref("typing/" + user.uid).set({ user: user.displayName, typing: false, timestamp: Date.now() });
+            db.ref("typing/" + user.uid).set({
+                user: user.displayName,
+                typing: false,
+                timestamp: Date.now()
+            });
         }, 3000);
     });
     messageInput.addEventListener("keydown", (event) => {
@@ -539,21 +597,19 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("scrollBtn").classList.toggle("visible", !isAtBottom);
     });
     document.addEventListener("click", function(event) {
-    // Event listener untuk gambar
-    if (event.target.tagName === "IMG" && event.target.closest(".file-message")) {
-        showImageModal(event.target.src);
-    }
-    // Event listener BARU untuk video
-    if (event.target.tagName === "VIDEO" && event.target.closest(".file-message")) {
-        showVideoModal(event.target.src);
-    }
-});
-
+        if (event.target.tagName === "IMG" && event.target.closest(".file-message")) {
+            showImageModal(event.target.src);
+        }
+        if (event.target.tagName === "VIDEO" && event.target.closest(".file-message")) {
+            showVideoModal(event.target.src);
+        }
+    });
 
     function updateNameCharCount() {
         nameCharCount.textContent = `${nameInput.value.length}/20`;
     }
     nameInput.addEventListener("input", updateNameCharCount);
+    // Perbaikan: auth.onAuthStateChanged sekarang menampilkan profil yang disinkronkan
     auth.onAuthStateChanged((user) => {
         clearTimeout(typingTimeout);
         if (user) {
@@ -561,8 +617,9 @@ document.addEventListener("DOMContentLoaded", function () {
             lastMessageDate = null;
             loginScreen.style.display = "none";
             userInfo.style.display = "flex";
-            userAvatar.src = getAvatarUrl() || user.photoURL;
-            userName.textContent = getDisplayName() || user.displayName;
+            // Ambil data langsung dari objek user yang disinkronkan oleh Firebase
+            userAvatar.src = user.photoURL || "default-avatar.jpg";
+            userName.textContent = user.displayName;
             messageInput.disabled = false;
             messageInput.placeholder = "Ketik pesan...";
             sendButton.disabled = false;
@@ -609,7 +666,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("messages").appendChild(dateHeader);
                     lastMessageDate = messageDate;
                 }
-                const time = new Date(messageData.timestamp || Date.now()).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+                const time = new Date(messageData.timestamp || Date.now()).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
                 const userColor = stringToColor(messageData.user);
                 const isAdminUser = isAdmin(messageData.email);
                 const specialTitle = getSpecialTitle(messageData.userId);
