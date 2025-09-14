@@ -38,7 +38,6 @@ const adminUsers = {
     "rileka8171@lanipe.com": true,
     "rahasia@gmail.com": true,
     "zenn1tstrid@gmail.com": true,
-    "admin@eberardos.com": true,
     "apalahdawg@gmail.com": true,
 };
 const specialUsers = {
