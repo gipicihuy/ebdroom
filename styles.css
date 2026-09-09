@@ -227,11 +227,13 @@ body {
     padding: 76px 15px 78px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
     background: var(--bg-primary);
     scroll-behavior: smooth;
 }
-.message { display: flex; max-width: 82%; gap: 8px; animation: fadeIn 0.2s ease; align-items: flex-end; }
+.message { display: flex; max-width: 82%; gap: 6px; animation: fadeIn 0.2s ease; align-items: flex-start; margin-top: 14px; }
+.message:first-child { margin-top: 0; }
+.date-header + .message { margin-top: 8px; }
+.message.grouped { margin-top: 2px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .message.mine { align-self: flex-end; flex-direction: row-reverse; }
 
@@ -241,8 +243,9 @@ body {
     object-fit: cover;
     flex-shrink: 0;
     border: 1px solid rgba(229, 57, 53, 0.3);
-    margin-bottom: 2px;
+    margin-top: 1px;
 }
+.message.grouped .message-avatar { visibility: hidden; }
 
 .message-content {
     position: relative;
@@ -252,12 +255,13 @@ body {
     border: 1px solid var(--border-color);
     color: var(--chat-text);
     transition: var(--transition);
-    max-width: calc(100% - 36px);
+    max-width: calc(100% - 34px);
     font-size: 0.9rem;
     line-height: 1.35;
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
+.message.grouped .message-content { border-radius: var(--border-radius-sm) var(--border-radius-lg) var(--border-radius-lg) 4px; }
 .message-content p { margin: 0; }
 .message-content p + p { margin-top: 4px; }
 .message.mine .message-content {
@@ -266,13 +270,15 @@ body {
     color: var(--chat-text);
     border-radius: var(--border-radius-lg) var(--border-radius-lg) 4px var(--border-radius-lg);
 }
+.message.mine.grouped .message-content { border-radius: var(--border-radius-lg) var(--border-radius-sm) 4px var(--border-radius-lg); }
 
-.message .user { font-weight: 600; color: var(--chat-accent); font-size: 0.78rem; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; line-height: 1.2; }
-.message.mine .user { color: rgba(255, 255, 255, 0.9); }
+.message .user { font-weight: 500; color: var(--chat-accent); opacity: 0.85; font-size: 0.75rem; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; line-height: 1.2; }
+.message.mine .user { color: rgba(255, 255, 255, 0.75); }
+.message.grouped .user { display: none; }
 
 .message .timestamp-container { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 2px; }
-.message .timestamp { font-size: 0.66rem; color: var(--chat-timestamp); line-height: 1; }
-.message.mine .timestamp { color: var(--chat-timestamp); }
+.message .timestamp { font-size: 0.62rem; color: var(--chat-timestamp); opacity: 0.75; line-height: 1; }
+.message.mine .timestamp { color: var(--chat-timestamp); opacity: 0.75; }
 
 /* ===== Badges ===== */
 .admin-badge {
@@ -360,19 +366,19 @@ body {
 .delete-btn:hover { background: rgba(239, 68, 68, 0.3); transform: scale(1.1); }
 
 .reply-btn {
-    background: rgba(229, 57, 53, 0.12);
+    background: rgba(229, 57, 53, 0.10);
     border: none;
     border-radius: 50%;
-    width: 20px; height: 20px;
+    width: 18px; height: 18px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     color: var(--chat-accent);
-    font-size: 0.6rem;
-    transition: var(--transition);
     opacity: 0;
+    font-size: 0.55rem;
+    transition: var(--transition);
 }
-.message:hover .reply-btn { opacity: 1; }
-.reply-btn:hover { background: rgba(229, 57, 53, 0.3); transform: scale(1.1); }
+.message:hover .reply-btn { opacity: 0.7; }
+.reply-btn:hover { background: rgba(229, 57, 53, 0.22); opacity: 1 !important; transform: scale(1.08); }
 
 .deleted-message { font-style: italic; color: var(--text-muted) !important; background: rgba(102, 102, 102, 0.1) !important; }
 .deleted-message .message-content { background: transparent !important; border-color: var(--border-color) !important; }
@@ -412,20 +418,20 @@ body {
 .reply-container .reply-sender { font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
 
 .message-reply-container {
-    background-color: var(--chat-reply-bg);
+    background-color: rgba(0, 0, 0, 0.18);
     color: var(--chat-text);
-    border-left: 3px solid var(--chat-accent);
+    border-left: 2px solid rgba(229, 57, 53, 0.5);
     border-radius: var(--border-radius-sm);
     padding: 4px 8px;
     margin-bottom: 4px;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     line-height: 1.3;
     word-wrap: break-word;
-    opacity: 0.92;
+    opacity: 0.75;
 }
-.message.mine .message-reply-container { background-color: rgba(255, 255, 255, 0.14); border-left: 3px solid var(--chat-accent); color: var(--chat-text); }
-.message-reply-container .reply-sender { font-weight: 600; color: var(--chat-accent); margin-bottom: 1px; }
-.message.mine .message-reply-container .reply-sender { color: rgba(255, 255, 255, 0.85); }
+.message.mine .message-reply-container { background-color: rgba(0, 0, 0, 0.15); border-left: 2px solid rgba(255, 255, 255, 0.35); color: var(--chat-text); }
+.message-reply-container .reply-sender { font-weight: 600; color: rgba(229, 57, 53, 0.85); margin-bottom: 1px; }
+.message.mine .message-reply-container .reply-sender { color: rgba(255, 255, 255, 0.7); }
 
 /* ===== Input area (mirrors ebd-ai's pill input-container) ===== */
 .input-area {
