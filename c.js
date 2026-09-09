@@ -1,24 +1,18 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyC7daiyJM_hu_vD6sVsJkv0bdjiTPBlx-s",
-    authDomain: "roomchat-ebd.firebaseapp.com",
-    databaseURL: "https://roomchat-ebd-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "roomchat-ebd",
-    storageBucket: "roomchat-ebd.firebasestorage.app",
-    messagingSenderId: "557680290447",
-    appId: "1:557680290447:web:20a786f9a82195571a5efa",
-    measurementId: "G-ZP7NYS7EHM",
-};
-const SUPABASE_URL = "https://sgaanvkwiiaxexqvillg.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnYWFudmt3aWlheGV4cXZpbGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MTI2ODUsImV4cCI6MjA3MjE4ODY4NX0.KkCP5QP8OwyzvCFpzCPKhoa10W49cNqLYoluClKlofM";
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
-const provider = new firebase.auth.GoogleAuthProvider();
+// ============================================================
+// Supabase config — ganti apiKey/URL Firebase lama dengan ini.
+// SEBAIKNYA nilai di bawah diambil dari env var saat build (Vercel),
+// bukan hardcode. Kalau lo pake plain static hosting tanpa build step,
+// anon key Supabase memang didesain aman untuk dipublish di frontend
+// (dibatasi oleh Row Level Security di database).
+// ============================================================
+const SUPABASE_URL = window.__ENV__?.SUPABASE_URL || "https://sgaanvkwiiaxexqvillg.supabase.co";
+const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnYWFudmt3aWlheGV4cXZpbGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MTI2ODUsImV4cCI6MjA3MjE4ODY4NX0.KkCP5QP8OwyzvCFpzCPKhoa10W49cNqLYoluClKlofM";
+
 const {
     createClient
 } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const messagesRef = db.ref("chat");
+
 const loginScreen = document.getElementById("loginScreen");
 const userInfo = document.getElementById("userInfo");
 const userAvatar = document.getElementById("userAvatar");
@@ -31,6 +25,7 @@ const avatarInput = document.getElementById("avatarInput");
 const nameModal = document.getElementById("nameModal");
 const nameInput = document.getElementById("nameInput");
 const nameCharCount = document.getElementById("nameCharCount");
+
 const adminUsers = {
     "jembud@gmail.com": true,
     "rafiqmarwan80@gmail.com": true,
@@ -40,23 +35,27 @@ const adminUsers = {
     "zenn1tstrid@gmail.com": true,
     "apalahdawg@gmail.com": true,
 };
-const specialUsers = {
-    "4AMUSgR0pLSndwsrTUzazaXXybl2": "Raja Iblis",
-    "UYxmj0pZPhh6bvbUTa89SH8UeW42": "Official"
-};
+// NOTE: key di sini dulu adalah Firebase UID. Setelah migrasi ke Supabase,
+// user ID berubah format (uuid baru), jadi mapping lama otomatis kosong.
+// Isi ulang pake Supabase user id (auth.users.id) kalau mau dipakai lagi.
+const specialUsers = {};
+
 let messageElements = {};
 let selectedFile = null;
 let replyTo = null;
 let sending = false;
 let isUserAtBottom = true;
 let typingTimeout;
-let currentUser = null;
+let currentUser = null; // { id, email }
+let currentProfile = null; // { display_name, avatar_url }
 let selectedAvatar = null;
 const objectUrls = new Set();
 let lastMessageDate = null;
 let lastRenderedUserId = null;
 let lastRenderedTimestamp = null;
 const GROUP_TIME_THRESHOLD = 5 * 60 * 1000;
+let messagesChannel = null;
+let typingChannel = null;
 
 function escapeHtml(text) {
     const map = {
@@ -90,17 +89,16 @@ function getSpecialTitle(userId) {
     return specialUsers[userId] || "";
 }
 
-// Fungsi getDisplayName dan getAvatarUrl diperbarui untuk mengambil data langsung dari currentUser
 function getDisplayName() {
-    return currentUser ? currentUser.displayName || "" : "";
+    return currentProfile ? currentProfile.display_name || "" : "";
 }
 
 function getAvatarUrl() {
-    return currentUser ? currentUser.photoURL || "" : "";
+    return currentProfile ? currentProfile.avatar_url || "" : "";
 }
 
 function clearUserSpecificCache() {
-    // Karena kita tidak lagi menggunakan localStorage, fungsi ini tidak diperlukan.
+    // Tidak dipakai (tidak pake localStorage).
 }
 
 function cleanupObjectUrls() {
@@ -136,7 +134,7 @@ function previewFile(file) {
         const objectUrl = URL.createObjectURL(file);
         objectUrls.add(objectUrl);
         link.href = objectUrl;
-        link.textContent = "ÃƒÂ°Ã…Â¸Ã¢â‚¬Â Ã¢â‚¬â€  Pratinjau PDF";
+        link.textContent = "Pratinjau PDF";
         link.target = "_blank";
         previewArea.appendChild(link);
     }
@@ -160,16 +158,24 @@ function formatDateHeader(timestamp) {
         });
     }
 }
+
+// ── AUTH ──────────────────────────────────────────────────────
 window.loginWithGoogle = function() {
-    auth.signInWithPopup(provider)
-        .then((result) => {
-            console.log("User signed in:", result.user);
-        })
-        .catch((error) => {
+    supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+            redirectTo: window.location.origin + window.location.pathname
+        }
+    }).then(({
+        error
+    }) => {
+        if (error) {
             console.error("Error during sign in:", error);
             alert("Terjadi error saat login. Silakan coba lagi.");
-        });
+        }
+    });
 };
+
 window.signInWithEmail = function() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
@@ -177,15 +183,22 @@ window.signInWithEmail = function() {
         alert("Email dan password harus diisi!");
         return;
     }
-    auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            console.log("User signed in:", userCredential.user);
-        })
-        .catch((error) => {
+    supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    }).then(({
+        data,
+        error
+    }) => {
+        if (error) {
             console.error("Error during email sign in:", error);
             alert("An error occurred while logging in: " + error.message);
-        });
+            return;
+        }
+        console.log("User signed in:", data.user);
+    });
 };
+
 window.signUpWithEmail = function() {
     const name = document.getElementById("registerName").value;
     const email = document.getElementById("registerEmail").value;
@@ -202,27 +215,34 @@ window.signUpWithEmail = function() {
         alert("Password minimal 6 karakter!");
         return;
     }
-    auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            return userCredential.user.updateProfile({
-                displayName: name
-            });
-        })
-        .then(() => {
-            console.log("User registered:", auth.currentUser);
-        })
-        .catch((error) => {
+    supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: name
+            }
+        }
+    }).then(({
+        data,
+        error
+    }) => {
+        if (error) {
             console.error("Error during registration:", error);
             alert("Terjadi error saat pendaftaran: " + error.message);
-        });
+            return;
+        }
+        console.log("User registered:", data.user);
+    });
 };
+
 window.signOut = function() {
-    const user = auth.currentUser;
-    if (!user) {
+    if (!currentUser) {
         return;
     }
     document.getElementById("confirmModal").style.display = "flex";
 };
+
 window.showNameModal = function() {
     nameInput.value = getDisplayName() || "";
     nameModal.style.display = "flex";
@@ -233,37 +253,26 @@ window.hideNameModal = function() {
     nameModal.style.display = "none";
 };
 
-// Perbaikan: Fungsi saveDisplayName sekarang memperbarui profil Firebase
-window.saveDisplayName = function() {
+window.saveDisplayName = async function() {
     const newName = nameInput.value.trim();
-    if (newName && currentUser) {
-        currentUser.updateProfile({
-            displayName: newName
-        }).then(() => {
-            console.log("Display name updated successfully.");
-            // Perbarui UI secara langsung
-            userName.textContent = newName;
-            // Perbarui nama di semua pesan yang sudah ada
-            const userId = currentUser.uid;
-            messagesRef
-                .orderByChild("userId")
-                .equalTo(userId)
-                .once("value", (snapshot) => {
-                    const updates = {};
-                    snapshot.forEach((childSnapshot) => {
-                        updates[`chat/${childSnapshot.key}/user`] = newName;
-                    });
-                    db.ref()
-                        .update(updates)
-                        .catch((error) => {
-                            console.error("Error updating messages:", error);
-                        });
-                });
-            nameModal.style.display = "none";
-        }).catch((error) => {
-            console.error("Error updating display name:", error);
-            alert("Gagal menyimpan nama: " + error.message);
-        });
+    if (!newName || !currentUser) return;
+    try {
+        const {
+            error
+        } = await supabaseClient.from("profiles").update({
+            display_name: newName
+        }).eq("id", currentUser.id);
+        if (error) throw error;
+        currentProfile.display_name = newName;
+        userName.textContent = newName;
+        // Perbarui nama di semua pesan yang sudah ada dari user ini
+        await supabaseClient.from("messages").update({
+            user_name: newName
+        }).eq("user_id", currentUser.id);
+        nameModal.style.display = "none";
+    } catch (error) {
+        console.error("Error updating display name:", error);
+        alert("Gagal menyimpan nama: " + error.message);
     }
 };
 
@@ -295,7 +304,6 @@ window.hideAvatarModal = function() {
     avatarInput.value = "";
 };
 
-// Perbaikan: Fungsi saveAvatar sekarang memperbarui profil Firebase
 window.saveAvatar = async function() {
     if (!selectedAvatar || !currentUser) {
         alert("Pilih gambar terlebih dahulu!");
@@ -312,34 +320,24 @@ window.saveAvatar = async function() {
             data: urlData
         } = supabaseClient.storage.from("chat-avatars").getPublicUrl(data.path);
         const avatarUrl = urlData.publicUrl;
-        // Perbarui profil Firebase
-        await currentUser.updateProfile({
-            photoURL: avatarUrl
-        });
-        console.log("Avatar updated successfully.");
-        // Perbarui UI dan pesan-pesan yang sudah ada
+        const {
+            error: updateError
+        } = await supabaseClient.from("profiles").update({
+            avatar_url: avatarUrl
+        }).eq("id", currentUser.id);
+        if (updateError) throw updateError;
+        currentProfile.avatar_url = avatarUrl;
         userAvatar.src = avatarUrl;
-        const userId = currentUser.uid;
-        messagesRef
-            .orderByChild("userId")
-            .equalTo(userId)
-            .once("value", (snapshot) => {
-                const updates = {};
-                snapshot.forEach((childSnapshot) => {
-                    updates[`chat/${childSnapshot.key}/photoURL`] = avatarUrl;
-                });
-                db.ref()
-                    .update(updates)
-                    .catch((error) => {
-                        console.error("Error updating message avatar:", error);
-                    });
-            });
+        await supabaseClient.from("messages").update({
+            photo_url: avatarUrl
+        }).eq("user_id", currentUser.id);
         hideAvatarModal();
     } catch (error) {
         console.error("Error uploading avatar:", error);
         alert("Gagal mengupload avatar: " + error.message);
     }
 };
+
 window.handleFileSelect = function(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -358,6 +356,7 @@ window.cancelUpload = function() {
     document.getElementById("fileInput").value = "";
     document.getElementById("filePreview").style.display = "none";
 };
+
 window.uploadToSupabase = async function(file) {
     try {
         const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
@@ -376,57 +375,63 @@ window.uploadToSupabase = async function(file) {
         return null;
     }
 };
-window.deleteMessage = function(messageId) {
+
+window.deleteMessage = async function(messageId) {
     if (!confirm("Hapus pesan ini?")) return;
-    const user = auth.currentUser;
-    if (!user) {
+    if (!currentUser) {
         alert("Silakan login terlebih dahulu!");
         return;
     }
-    const messageRef = db.ref("chat/" + messageId);
-    messageRef.once("value", (snapshot) => {
-        const messageData = snapshot.val();
-        if (messageData && (messageData.userId === user.uid || isAdmin(user.email))) {
-            messageRef.update({
+    try {
+        const {
+            data: messageData,
+            error: fetchError
+        } = await supabaseClient.from("messages").select("*").eq("id", messageId).single();
+        if (fetchError) throw fetchError;
+        if (messageData && (messageData.user_id === currentUser.id || isAdmin(currentUser.email))) {
+            const {
+                error
+            } = await supabaseClient.from("messages").update({
                 deleted: true,
                 text: "",
-                fileUrl: "",
-                fileName: "",
-                fileType: ""
-            }).catch((error) => {
-                console.error("Error deleting message:", error);
-                alert("Gagal menghapus pesan!");
-            });
+                file_url: "",
+                file_name: "",
+                file_type: ""
+            }).eq("id", messageId);
+            if (error) throw error;
         } else {
             alert("Anda hanya dapat menghapus pesan sendiri!");
         }
-    });
+    } catch (error) {
+        console.error("Error deleting message:", error);
+        alert("Gagal menghapus pesan!");
+    }
 };
-window.replyToMessage = function(messageId, event) {
+
+window.replyToMessage = async function(messageId, event) {
     if (event) {
         event.stopPropagation();
     }
-    const messageRef = db.ref("chat/" + messageId);
-    messageRef.once("value", (snapshot) => {
-        const messageData = snapshot.val();
-        if (messageData) {
-            replyTo = {
-                messageId: messageId,
-                user: messageData.user,
-                text: messageData.text
-            };
-            document.getElementById("replyPreview").style.display = "flex";
-            document.getElementById("replyUser").textContent = messageData.user;
-            document.getElementById("replyText").textContent = messageData.text.length > 30 ? messageData.text.substring(0, 30) + "..." : messageData.text;
-            messageInput.focus();
-        }
-    });
+    const {
+        data: messageData,
+        error
+    } = await supabaseClient.from("messages").select("*").eq("id", messageId).single();
+    if (error || !messageData) return;
+    replyTo = {
+        messageId: messageId,
+        user: messageData.user_name,
+        text: messageData.text
+    };
+    document.getElementById("replyPreview").style.display = "flex";
+    document.getElementById("replyUser").textContent = messageData.user_name;
+    document.getElementById("replyText").textContent = messageData.text.length > 30 ? messageData.text.substring(0, 30) + "..." : messageData.text;
+    messageInput.focus();
 };
+
 window.sendMessage = async function() {
     if (sending) return;
     sending = true;
-    const user = auth.currentUser;
-    if (!user) {
+    if (!currentUser) {
         alert("Silakan login terlebih dahulu!");
         sending = false;
         return;
@@ -450,50 +455,45 @@ window.sendMessage = async function() {
         fileName = selectedFile.name;
         fileType = selectedFile.type;
     }
-    // Menggunakan user.displayName dan user.photoURL yang sudah disinkronkan oleh Firebase
     const messageData = {
-        userId: user.uid,
-        user: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        text: text,
-        timestamp: Date.now()
+        user_id: currentUser.id,
+        user_name: currentProfile?.display_name || "",
+        email: currentUser.email,
+        photo_url: currentProfile?.avatar_url || "",
+        text: text
     };
     if (fileUrl) {
-        messageData.fileUrl = fileUrl;
-        messageData.fileName = fileName;
-        messageData.fileType = fileType;
+        messageData.file_url = fileUrl;
+        messageData.file_name = fileName;
+        messageData.file_type = fileType;
     }
     if (replyTo) {
-        messageData.replyTo = replyTo;
+        messageData.reply_to = replyTo;
     }
-    messagesRef
-        .push(messageData)
-        .then(() => {
-            messageInput.value = "";
-            messageInput.style.height = "auto";
-            selectedFile = null;
-            document.getElementById("filePreview").style.display = "none";
-            document.getElementById("fileInput").value = "";
-            replyTo = null;
-            document.getElementById("replyPreview").style.display = "none";
-            db.ref("typing/" + user.uid).set({
-                user: user.displayName,
-                typing: false,
-                timestamp: Date.now()
-            });
-            setTimeout(() => {
-                scrollToBottom();
-            }, 100);
-        })
-        .catch((error) => {
-            console.error("Error sending message:", error);
-            alert("Gagal mengirim pesan!");
-        })
-        .finally(() => {
-            sending = false;
-        });
+    try {
+        const {
+            error
+        } = await supabaseClient.from("messages").insert(messageData);
+        if (error) throw error;
+        messageInput.value = "";
+        messageInput.style.height = "auto";
+        selectedFile = null;
+        document.getElementById("filePreview").style.display = "none";
+        document.getElementById("fileInput").value = "";
+        replyTo = null;
+        document.getElementById("replyPreview").style.display = "none";
+        await setTypingStatus(false);
+        setTimeout(() => {
+            scrollToBottom();
+        }, 100);
+    } catch (error) {
+        console.error("Error sending message:", error);
+        alert("Gagal mengirim pesan!");
+    } finally {
+        sending = false;
+    }
 };
+
 window.cancelReply = function() {
     replyTo = null;
     document.getElementById("replyPreview").style.display = "none";
@@ -539,6 +539,229 @@ window.downloadImage = function() {
     const imageUrl = document.getElementById("modalImage").src;
     window.open(imageUrl, "_blank");
 };
+
+async function setTypingStatus(typing) {
+    if (!currentUser) return;
+    await supabaseClient.from("typing_status").upsert({
+        user_id: currentUser.id,
+        user_name: currentProfile?.display_name || "",
+        typing: typing,
+        updated_at: new Date().toISOString()
+    });
+}
+
+function renderMessage(messageData) {
+    const messageId = messageData.id;
+    if (messageElements[messageId]) {
+        return;
+    }
+    const timestampMs = new Date(messageData.created_at).getTime();
+    const escapedText = escapeHtml(messageData.text || "");
+    const messageElement = document.createElement("div");
+    messageElement.className = "message";
+    messageElement.id = `message-${messageId}`;
+    if (messageData.user_id === currentUser.id) {
+        messageElement.classList.add("mine");
+    }
+    if (messageData.deleted) {
+        messageElement.classList.add("deleted-message");
+    }
+    if (messageData.file_url) {
+        messageElement.classList.add("file-message");
+    }
+    const messageDate = new Date(timestampMs).toDateString();
+    if (messageDate !== lastMessageDate) {
+        const dateHeader = document.createElement("div");
+        dateHeader.className = "date-header";
+        dateHeader.innerHTML = `<span>${formatDateHeader(timestampMs)}</span>`;
+        document.getElementById("messages").appendChild(dateHeader);
+        lastMessageDate = messageDate;
+        lastRenderedUserId = null;
+        lastRenderedTimestamp = null;
+    }
+    const isGrouped =
+        !messageData.reply_to &&
+        lastRenderedUserId === messageData.user_id &&
+        lastRenderedTimestamp !== null &&
+        timestampMs - lastRenderedTimestamp < GROUP_TIME_THRESHOLD;
+    if (isGrouped) {
+        messageElement.classList.add("grouped");
+    }
+    lastRenderedUserId = messageData.user_id;
+    lastRenderedTimestamp = timestampMs;
+    const time = new Date(timestampMs).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+    const userColor = stringToColor(messageData.user_name);
+    const isAdminUser = isAdmin(messageData.email);
+    const specialTitle = getSpecialTitle(messageData.user_id);
+    const isKoruptor = ["lwklowkwkwk@gmail.com", "commentfotocik@gmail.com", "commentcik@gmail.com"].includes(messageData.email);
+    let fileContent = "";
+    if (messageData.file_url) {
+        if (messageData.file_type && messageData.file_type.startsWith("image")) {
+            fileContent = `<img src="${escapeHtml(messageData.file_url)}" alt="File upload" onerror="this.style.display='none'" style="cursor:pointer">`;
+        } else if (messageData.file_type && messageData.file_type.startsWith("video")) {
+            fileContent = `<video src="${escapeHtml(messageData.file_url)}" controls style="max-width:100%;max-height:200px;border-radius:var(--border-radius-sm);margin-top:8px"></video>`;
+        } else {
+            fileContent = `<a href="${escapeHtml(messageData.file_url)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> Download File: ${escapeHtml(messageData.file_name || "File")}</a>`;
+        }
+    }
+    let replyContent = "";
+    if (messageData.reply_to && !messageData.deleted) {
+        replyContent = `<div class="message-reply-container"><span class="reply-sender">${escapeHtml(messageData.reply_to.user)}</span>: ${escapeHtml(messageData.reply_to.text)}</div>`;
+    }
+    let messageBody = "";
+    if (messageData.deleted) {
+        messageBody = "<em>Pesan dihapus</em>";
+    } else {
+        messageBody = `${replyContent}${escapedText ? `<p>${escapedText}</p>` : ""}${fileContent ? `<div>${fileContent}</div>` : ""}`;
+    }
+    messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photo_url || "default-avatar.jpg")}" alt="${escapeHtml(
+        messageData.user_name
+    )}" onerror="this.src='default-avatar.jpg'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user_name)}${isAdminUser ? '<span class="admin-badge">ADMIN</span>' : ""}${
+        isKoruptor ? '<span class="korupsi-badge">DPR</span>' : ""
+    }${specialTitle ? '<span class="medan-badge">' + escapeHtml(specialTitle) + "</span>" : ""}</div>${messageBody}<div class="timestamp-container"><span class="timestamp">${time}</span>${
+        !messageData.deleted ? `<button class="reply-btn" onclick="replyToMessage('${messageId}', event)" title="Balas Pesan"><i class="fas fa-reply"></i></button>` : ""
+    }${
+        (messageData.user_id === currentUser.id || isAdmin(currentUser.email)) && !messageData.deleted ? `<button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>` : ""
+    }</div></div>`;
+    document.getElementById("messages").appendChild(messageElement);
+    messageElements[messageId] = messageElement;
+    if (isUserAtBottom) {
+        setTimeout(() => {
+            scrollToBottom();
+        }, 100);
+    }
+}
+
+function updateMessage(messageData) {
+    const messageId = messageData.id;
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (!messageElement) return;
+    if (messageData.deleted) {
+        messageElement.classList.add("deleted-message");
+        const messageContent = messageElement.querySelector(".message-content");
+        const userDiv = messageContent.querySelector(".user");
+        messageContent.innerHTML = "";
+        if (userDiv) messageContent.appendChild(userDiv);
+        const em = document.createElement("em");
+        em.textContent = "Pesan dihapus";
+        messageContent.appendChild(em);
+    }
+}
+
+async function loadProfile(userId) {
+    const {
+        data,
+        error
+    } = await supabaseClient.from("profiles").select("*").eq("id", userId).single();
+    if (error) {
+        console.error("Error loading profile:", error);
+        return {
+            display_name: "",
+            avatar_url: ""
+        };
+    }
+    return data;
+}
+
+async function initChatSession(user) {
+    lastMessageDate = null;
+    lastRenderedUserId = null;
+    lastRenderedTimestamp = null;
+    loginScreen.style.display = "none";
+    userInfo.style.display = "flex";
+
+    currentProfile = await loadProfile(user.id);
+    // Kalau login pertama kali via Google, display_name/avatar dari OAuth belum ke-copy ke profiles.
+    if (!currentProfile.display_name && user.user_metadata?.full_name) {
+        currentProfile.display_name = user.user_metadata.full_name;
+        currentProfile.avatar_url = user.user_metadata.avatar_url || "";
+        await supabaseClient.from("profiles").update({
+            display_name: currentProfile.display_name,
+            avatar_url: currentProfile.avatar_url
+        }).eq("id", user.id);
+    }
+
+    userAvatar.src = currentProfile.avatar_url || "default-avatar.jpg";
+    userName.textContent = currentProfile.display_name || user.email;
+    messageInput.disabled = false;
+    messageInput.placeholder = "Ketik pesan...";
+    sendButton.disabled = false;
+
+    // Typing indicator
+    if (typingChannel) supabaseClient.removeChannel(typingChannel);
+    typingChannel = supabaseClient
+        .channel("typing_status_changes")
+        .on("postgres_changes", {
+            event: "*",
+            schema: "public",
+            table: "typing_status"
+        }, async () => {
+            const {
+                data
+            } = await supabaseClient.from("typing_status").select("*").eq("typing", true);
+            const typingUsers = (data || [])
+                .filter((t) => t.user_name !== currentProfile.display_name)
+                .map((t) => t.user_name);
+            const typingStatus = document.getElementById("typingStatus");
+            typingStatus.innerHTML = typingUsers.length > 0 ? `<div style="padding:5px 15px;font-size:0.8rem;color:var(--text-muted)">${typingUsers.join(", ")} sedang mengetik...</div>` : "";
+        })
+        .subscribe();
+
+    // Load pesan yang sudah ada
+    const {
+        data: existingMessages
+    } = await supabaseClient.from("messages").select("*").order("created_at", {
+        ascending: true
+    });
+    (existingMessages || []).forEach((m) => renderMessage(m));
+    setTimeout(() => {
+        scrollToBottom();
+    }, 1500);
+
+    // Subscribe realtime buat pesan baru & perubahan (soft-delete)
+    if (messagesChannel) supabaseClient.removeChannel(messagesChannel);
+    messagesChannel = supabaseClient
+        .channel("messages_changes")
+        .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "messages"
+        }, (payload) => renderMessage(payload.new))
+        .on("postgres_changes", {
+            event: "UPDATE",
+            schema: "public",
+            table: "messages"
+        }, (payload) => updateMessage(payload.new))
+        .subscribe();
+}
+
+function endChatSession() {
+    loginScreen.style.display = "flex";
+    userInfo.style.display = "none";
+    messageInput.disabled = true;
+    messageInput.placeholder = "Silakan login untuk mengirim pesan";
+    sendButton.disabled = true;
+    document.getElementById("messages").innerHTML = "";
+    messageElements = {};
+    lastMessageDate = null;
+    lastRenderedUserId = null;
+    lastRenderedTimestamp = null;
+    cleanupObjectUrls();
+    if (messagesChannel) {
+        supabaseClient.removeChannel(messagesChannel);
+        messagesChannel = null;
+    }
+    if (typingChannel) {
+        supabaseClient.removeChannel(typingChannel);
+        typingChannel = null;
+    }
+}
+
+window.addEventListener("beforeunload", cleanupObjectUrls);
+
 document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("showRegister").addEventListener("click", function(e) {
         e.preventDefault();
@@ -550,15 +773,17 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("emailRegisterForm").style.display = "none";
         document.getElementById("emailLoginForm").style.display = "block";
     });
-    document.getElementById("confirmLogoutBtn").addEventListener("click", () => {
+    document.getElementById("confirmLogoutBtn").addEventListener("click", async () => {
         clearTimeout(typingTimeout);
-        auth.signOut()
-            .then(() => {
-                console.log("User signed out");
-            })
-            .catch((error) => {
-                console.error("Error during sign out:", error);
-            });
+        await setTypingStatus(false);
+        const {
+            error
+        } = await supabaseClient.auth.signOut();
+        if (error) {
+            console.error("Error during sign out:", error);
+        } else {
+            console.log("User signed out");
+        }
         document.getElementById("confirmModal").style.display = "none";
     });
     document.getElementById("cancelLogoutBtn").addEventListener("click", () => {
@@ -568,22 +793,13 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("fileInput").click();
     });
     messageInput.addEventListener("input", () => {
-        const user = auth.currentUser;
-        if (!user) return;
+        if (!currentUser) return;
         messageInput.style.height = "auto";
         messageInput.style.height = messageInput.scrollHeight + "px";
-        db.ref("typing/" + user.uid).set({
-            user: user.displayName,
-            typing: true,
-            timestamp: Date.now()
-        });
+        setTypingStatus(true);
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
-            db.ref("typing/" + user.uid).set({
-                user: user.displayName,
-                typing: false,
-                timestamp: Date.now()
-            });
+            setTypingStatus(false);
         }, 3000);
     });
     messageInput.addEventListener("keydown", (event) => {
@@ -611,154 +827,35 @@ document.addEventListener("DOMContentLoaded", function() {
         nameCharCount.textContent = `${nameInput.value.length}/20`;
     }
     nameInput.addEventListener("input", updateNameCharCount);
-    // Perbaikan: auth.onAuthStateChanged sekarang menampilkan profil yang disinkronkan
-    auth.onAuthStateChanged((user) => {
+
+    // ── Auth state ──
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
         clearTimeout(typingTimeout);
+        const user = session?.user || null;
         if (user) {
             currentUser = user;
-            lastMessageDate = null;
-            lastRenderedUserId = null;
-            lastRenderedTimestamp = null;
-            loginScreen.style.display = "none";
-            userInfo.style.display = "flex";
-            // Ambil data langsung dari objek user yang disinkronkan oleh Firebase
-            userAvatar.src = user.photoURL || "default-avatar.jpg";
-            userName.textContent = user.displayName;
-            messageInput.disabled = false;
-            messageInput.placeholder = "Ketik pesan...";
-            sendButton.disabled = false;
-            db.ref("typing").on("value", (snapshot) => {
-                const typingUsers = [];
-                snapshot.forEach((childSnapshot) => {
-                    const typingData = childSnapshot.val();
-                    if (typingData.typing && typingData.user !== user.displayName) {
-                        typingUsers.push(typingData.user);
-                    }
-                });
-                const typingStatus = document.getElementById("typingStatus");
-                typingStatus.innerHTML = typingUsers.length > 0 ? `<div style="padding:5px 15px;font-size:0.8rem;color:var(--text-muted)">${typingUsers.join(", ")} sedang mengetik...</div>` : "";
-            });
-            messagesRef.once("value", () => {
-                setTimeout(() => {
-                    scrollToBottom();
-                }, 1500);
-            });
-            messagesRef.on("child_added", (snapshot) => {
-                const messageData = snapshot.val();
-                const messageId = snapshot.key;
-                if (messageElements[messageId]) {
-                    return;
-                }
-                const escapedText = escapeHtml(messageData.text || "");
-                const messageElement = document.createElement("div");
-                messageElement.className = "message";
-                messageElement.id = `message-${messageId}`;
-                if (messageData.userId === user.uid) {
-                    messageElement.classList.add("mine");
-                }
-                if (messageData.deleted) {
-                    messageElement.classList.add("deleted-message");
-                }
-                if (messageData.fileUrl) {
-                    messageElement.classList.add("file-message");
-                }
-                const messageDate = new Date(messageData.timestamp).toDateString();
-                if (messageDate !== lastMessageDate) {
-                    const dateHeader = document.createElement("div");
-                    dateHeader.className = "date-header";
-                    dateHeader.innerHTML = `<span>${formatDateHeader(messageData.timestamp)}</span>`;
-                    document.getElementById("messages").appendChild(dateHeader);
-                    lastMessageDate = messageDate;
-                    lastRenderedUserId = null;
-                    lastRenderedTimestamp = null;
-                }
-                const messageTimestamp = messageData.timestamp || Date.now();
-                const isGrouped =
-                    !messageData.replyTo &&
-                    lastRenderedUserId === messageData.userId &&
-                    lastRenderedTimestamp !== null &&
-                    messageTimestamp - lastRenderedTimestamp < GROUP_TIME_THRESHOLD;
-                if (isGrouped) {
-                    messageElement.classList.add("grouped");
-                }
-                lastRenderedUserId = messageData.userId;
-                lastRenderedTimestamp = messageTimestamp;
-                const time = new Date(messageData.timestamp || Date.now()).toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-                const userColor = stringToColor(messageData.user);
-                const isAdminUser = isAdmin(messageData.email);
-                const specialTitle = getSpecialTitle(messageData.userId);
-                const isKoruptor = ["lwklowkwkwk@gmail.com", "commentfotocik@gmail.com", "commentcik@gmail.com"].includes(messageData.email);
-                let fileContent = "";
-                if (messageData.fileUrl) {
-                    if (messageData.fileType && messageData.fileType.startsWith("image")) {
-                        fileContent = `<img src="${escapeHtml(messageData.fileUrl)}" alt="File upload" onerror="this.style.display='none'" style="cursor:pointer">`;
-                    } else if (messageData.fileType && messageData.fileType.startsWith("video")) {
-                        fileContent = `<video src="${escapeHtml(messageData.fileUrl)}" controls style="max-width:100%;max-height:200px;border-radius:var(--border-radius-sm);margin-top:8px"></video>`;
-                    } else {
-                        fileContent = `<a href="${escapeHtml(messageData.fileUrl)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> Download File: ${escapeHtml(messageData.fileName || "File")}</a>`;
-                    }
-                }
-                let replyContent = "";
-                if (messageData.replyTo && !messageData.deleted) {
-                    replyContent = `<div class="message-reply-container"><span class="reply-sender">${escapeHtml(messageData.replyTo.user)}</span>: ${escapeHtml(messageData.replyTo.text)}</div>`;
-                }
-                let messageBody = "";
-                if (messageData.deleted) {
-                    messageBody = "<em>Pesan dihapus</em>";
-                } else {
-                    messageBody = `${replyContent}${escapedText ? `<p>${escapedText}</p>` : ""}${fileContent ? `<div>${fileContent}</div>` : ""}`;
-                }
-                messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photoURL || "default-avatar.jpg")}" alt="${escapeHtml(
-                    messageData.user
-                )}" onerror="this.src='default-avatar.jpg'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user)}${isAdminUser ? '<span class="admin-badge">ADMIN</span>' : ""}${
-                    isKoruptor ? '<span class="korupsi-badge">DPR</span>' : ""
-                }${specialTitle ? '<span class="medan-badge">' + escapeHtml(specialTitle) + "</span>" : ""}</div>${messageBody}<div class="timestamp-container"><span class="timestamp">${time}</span>${
-                    !messageData.deleted ? `<button class="reply-btn" onclick="replyToMessage('${messageId}', event)" title="Balas Pesan"><i class="fas fa-reply"></i></button>` : ""
-                }${
-                    (messageData.userId === user.uid || isAdmin(user.email)) && !messageData.deleted ? `<button class="delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>` : ""
-                }</div></div>`;
-                document.getElementById("messages").appendChild(messageElement);
-                messageElements[messageId] = messageElement;
-                if (isUserAtBottom) {
-                    setTimeout(() => {
-                        scrollToBottom();
-                    }, 100);
-                }
-            });
-            messagesRef.on("child_changed", (snapshot) => {
-                const messageData = snapshot.val();
-                if (!messageData) return;
-                const messageId = snapshot.key;
-                const messageElement = document.getElementById(`message-${messageId}`);
-                if (!messageElement) return;
-                if (messageData.deleted) {
-                    messageElement.classList.add("deleted-message");
-                    const messageContent = messageElement.querySelector(".message-content");
-                    messageContent.innerHTML = "<em>Pesan dihapus</em>";
-                }
-            });
+            initChatSession(user);
         } else {
-            loginScreen.style.display = "flex";
-            userInfo.style.display = "none";
-            messageInput.disabled = true;
-            messageInput.placeholder = "Silakan login untuk mengirim pesan";
-            sendButton.disabled = true;
-            document.getElementById("messages").innerHTML = "";
-            messageElements = {};
-            lastMessageDate = null;
-            lastRenderedUserId = null;
-            lastRenderedTimestamp = null;
-            cleanupObjectUrls();
+            currentUser = null;
+            currentProfile = null;
+            endChatSession();
+        }
+    });
+    supabaseClient.auth.getSession().then(({
+        data: {
+            session
+        }
+    }) => {
+        const user = session?.user || null;
+        if (user) {
+            currentUser = user;
+            initChatSession(user);
         }
     });
 });
-window.addEventListener("beforeunload", cleanupObjectUrls);
 
 // ── Mobile keyboard fix (biar input area & bubble chat ngepas sama keyboard) ──
-(function () {
+(function() {
     const inputAreaBottom = document.getElementById("inputAreaBottom");
     const messagesContainer = document.getElementById("messages");
     if (!window.visualViewport || !inputAreaBottom || !messagesContainer) return;
