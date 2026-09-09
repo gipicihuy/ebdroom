@@ -177,15 +177,19 @@
             </div>
         </div>
 
-        <div class="input-area">
-            <div class="file-upload-btn" title="Upload File">
-                <i class="fas fa-paperclip"></i>
-                <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(event)" accept="*/*">
+        <div class="input-area" id="inputAreaBottom">
+            <div class="input-wrapper">
+                <div class="input-container">
+                    <div class="file-upload-btn" title="Upload File">
+                        <i class="fas fa-paperclip"></i>
+                        <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(event)" accept="*/*">
+                    </div>
+                    <textarea id="messageInput" class="input-field" placeholder="Ketik pesan..." rows="1" disabled></textarea>
+                    <button class="send-btn" onclick="sendMessage()" title="Kirim Pesan" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
-            <textarea id="messageInput" placeholder="Ketik pesan..." disabled></textarea>
-            <button onclick="sendMessage()" title="Kirim Pesan" disabled>
-                <i class="fas fa-paper-plane"></i>
-            </button>
         </div>
     </div>
 

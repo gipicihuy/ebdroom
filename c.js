@@ -735,3 +735,49 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 window.addEventListener("beforeunload", cleanupObjectUrls);
+
+// ── Mobile keyboard fix (biar input area & bubble chat ngepas sama keyboard) ──
+(function () {
+    const inputAreaBottom = document.getElementById("inputAreaBottom");
+    const messagesContainer = document.getElementById("messages");
+    if (!window.visualViewport || !inputAreaBottom || !messagesContainer) return;
+
+    let fixRaf = null;
+    let lastKb = 0;
+
+    const fix = () => {
+        if (fixRaf) cancelAnimationFrame(fixRaf);
+        fixRaf = requestAnimationFrame(() => {
+            const isZoomed = window.visualViewport.scale > 1.05;
+            if (isZoomed) return;
+
+            const vvHeight = window.visualViewport.height;
+            const kb = Math.max(0, window.innerHeight - vvHeight);
+            if (kb === lastKb) return;
+            lastKb = kb;
+
+            inputAreaBottom.style.transition = "none";
+            inputAreaBottom.style.bottom = kb > 0 ? kb + "px" : "0px";
+            messagesContainer.style.paddingBottom = kb > 0 ? kb + 150 + "px" : "";
+
+            const isAtBottom =
+                messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 150;
+            if (kb > 0 && isAtBottom) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+    };
+
+    const reset = () => {
+        if (fixRaf) cancelAnimationFrame(fixRaf);
+        fixRaf = requestAnimationFrame(() => {
+            lastKb = 0;
+            inputAreaBottom.style.bottom = "0px";
+            messagesContainer.style.paddingBottom = "";
+        });
+    };
+
+    window.visualViewport.addEventListener("resize", fix);
+    window.visualViewport.addEventListener("scroll", fix);
+    messageInput.addEventListener("blur", () => setTimeout(reset, 100));
+})();
