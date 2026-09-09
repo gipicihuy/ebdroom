@@ -54,6 +54,9 @@ let currentUser = null;
 let selectedAvatar = null;
 const objectUrls = new Set();
 let lastMessageDate = null;
+let lastRenderedUserId = null;
+let lastRenderedTimestamp = null;
+const GROUP_TIME_THRESHOLD = 5 * 60 * 1000;
 
 function escapeHtml(text) {
     const map = {
@@ -614,6 +617,8 @@ document.addEventListener("DOMContentLoaded", function() {
         if (user) {
             currentUser = user;
             lastMessageDate = null;
+            lastRenderedUserId = null;
+            lastRenderedTimestamp = null;
             loginScreen.style.display = "none";
             userInfo.style.display = "flex";
             // Ambil data langsung dari objek user yang disinkronkan oleh Firebase
@@ -664,7 +669,20 @@ document.addEventListener("DOMContentLoaded", function() {
                     dateHeader.innerHTML = `<span>${formatDateHeader(messageData.timestamp)}</span>`;
                     document.getElementById("messages").appendChild(dateHeader);
                     lastMessageDate = messageDate;
+                    lastRenderedUserId = null;
+                    lastRenderedTimestamp = null;
                 }
+                const messageTimestamp = messageData.timestamp || Date.now();
+                const isGrouped =
+                    !messageData.replyTo &&
+                    lastRenderedUserId === messageData.userId &&
+                    lastRenderedTimestamp !== null &&
+                    messageTimestamp - lastRenderedTimestamp < GROUP_TIME_THRESHOLD;
+                if (isGrouped) {
+                    messageElement.classList.add("grouped");
+                }
+                lastRenderedUserId = messageData.userId;
+                lastRenderedTimestamp = messageTimestamp;
                 const time = new Date(messageData.timestamp || Date.now()).toLocaleTimeString("id-ID", {
                     hour: "2-digit",
                     minute: "2-digit"
@@ -730,6 +748,9 @@ document.addEventListener("DOMContentLoaded", function() {
             sendButton.disabled = true;
             document.getElementById("messages").innerHTML = "";
             messageElements = {};
+            lastMessageDate = null;
+            lastRenderedUserId = null;
+            lastRenderedTimestamp = null;
             cleanupObjectUrls();
         }
     });
