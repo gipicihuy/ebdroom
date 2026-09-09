@@ -758,7 +758,7 @@ window.addEventListener("beforeunload", cleanupObjectUrls);
 
             inputAreaBottom.style.transition = "none";
             inputAreaBottom.style.bottom = kb > 0 ? kb + "px" : "0px";
-            messagesContainer.style.paddingBottom = kb > 0 ? kb + 110 + "px" : "";
+            messagesContainer.style.paddingBottom = kb > 0 ? kb + 96 + "px" : "";
 
             const isAtBottom =
                 messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 150;
