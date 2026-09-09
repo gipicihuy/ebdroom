@@ -5,8 +5,13 @@
 // anon key Supabase memang didesain aman untuk dipublish di frontend
 // (dibatasi oleh Row Level Security di database).
 // ============================================================
-const SUPABASE_URL = window.__ENV__?.SUPABASE_URL || "https://sgaanvkwiiaxexqvillg.supabase.co";
-const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnYWFudmt3aWlheGV4cXZpbGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2MTI2ODUsImV4cCI6MjA3MjE4ODY4NX0.KkCP5QP8OwyzvCFpzCPKhoa10W49cNqLYoluClKlofM";
+const SUPABASE_URL = window.__ENV__?.SUPABASE_URL;
+const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  document.body.innerHTML = "<p style='color:#f55;padding:2rem;font-family:sans-serif'>Konfigurasi Supabase belum ke-load. Cek env-config.js dan environment variables di Vercel.</p>";
+  throw new Error("SUPABASE_URL atau SUPABASE_ANON_KEY kosong");
+}
 
 const {
     createClient
