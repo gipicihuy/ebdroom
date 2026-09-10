@@ -62,7 +62,6 @@ const GROUP_TIME_THRESHOLD = 5 * 60 * 1000;
 let messagesChannel = null;
 let typingChannel = null;
 let typingIndicatorEl = null;
-let typingIndicatorHideTimeout = null;
 
 function escapeHtml(text) {
     const map = {
@@ -566,7 +565,6 @@ function ensureTypingIndicatorElement() {
     row.className = "typing-indicator-row";
     row.id = "typingIndicatorRow";
     row.setAttribute("aria-live", "polite");
-    row.style.display = "none";
 
     const nameEl = document.createElement("span");
     nameEl.className = "typing-indicator-name";
@@ -622,13 +620,7 @@ function renderTypingIndicator(typingUsers) {
     messagesContainer.appendChild(row);
 
     if (!typingUsers || typingUsers.length === 0) {
-        clearTimeout(typingIndicatorHideTimeout);
         row.classList.remove("visible");
-        // Tunggu transisi fade-out kelar dulu baru dilepas dari layout,
-        // biar ga ninggalin area kosong yang aneh.
-        typingIndicatorHideTimeout = setTimeout(() => {
-            row.style.display = "none";
-        }, 220);
         return;
     }
 
@@ -643,10 +635,7 @@ function renderTypingIndicator(typingUsers) {
         nameEl.appendChild(span);
     });
 
-    clearTimeout(typingIndicatorHideTimeout);
-    row.style.display = "flex";
-    // Reflow dulu sebelum nambah class biar transisi fade-in kepicu.
-    requestAnimationFrame(() => row.classList.add("visible"));
+    row.classList.add("visible");
 
     // Cuma auto-scroll kalau user memang lagi di posisi paling bawah;
     // kalau lagi scroll baca chat lama, posisi dibiarkan apa adanya.
@@ -863,7 +852,6 @@ function endChatSession() {
     lastMessageDate = null;
     lastRenderedUserId = null;
     lastRenderedTimestamp = null;
-    clearTimeout(typingIndicatorHideTimeout);
     typingIndicatorEl = null; // innerHTML="" di atas udah lepas node lama dari DOM
     cleanupObjectUrls();
     if (messagesChannel) {
