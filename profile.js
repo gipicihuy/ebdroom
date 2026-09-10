@@ -96,7 +96,7 @@ async function loadProfile(userId) {
 async function uploadAvatar(file) {
     const formData = new FormData();
     formData.append("file", file);
-    const uploadResponse = await fetch("https://athars.space/upload.php", {
+    const uploadResponse = await fetch("/api/upload", {
         method: "POST",
         body: formData
     });
