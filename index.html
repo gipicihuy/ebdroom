@@ -245,8 +245,8 @@
                 </div>
                 <input type="file" id="avatarInput" accept="image/*">
                 <div class="avatar-modal-buttons">
-                    <button onclick="hideAvatarModal()" style="background:var(--bg-secondary)">Batal</button>
-                    <button onclick="saveAvatar()">Simpan</button>
+                    <button onclick="hideAvatarModal()" class="modal-btn modal-btn-secondary">Batal</button>
+                    <button onclick="saveAvatar()" class="modal-btn modal-btn-primary">Simpan</button>
                 </div>
             </div>
         </div>
@@ -258,19 +258,20 @@
                 <input type="text" id="nameInput" maxlength="20" placeholder="Masukkan nama">
                 <span id="nameCharCount" class="char-count">0/20</span>
                 <div class="name-modal-buttons">
-                    <button onclick="hideNameModal()" style="background:var(--bg-secondary)">Batal</button>
-                    <button onclick="saveDisplayName()">Simpan</button>
+                    <button onclick="hideNameModal()" class="modal-btn modal-btn-secondary">Batal</button>
+                    <button onclick="saveDisplayName()" class="modal-btn modal-btn-primary">Simpan</button>
                 </div>
             </div>
         </div>
 
         <div class="custom-modal" id="confirmModal" style="display:none">
             <div class="custom-modal-content">
+                <div class="custom-modal-icon"><i class="fas fa-right-from-bracket"></i></div>
                 <h3>Konfirmasi Keluar</h3>
                 <p>lu yakin mw keluar? lu bakal perlu login lagi untuk lanjut</p>
                 <div class="modal-buttons">
-                    <button id="cancelLogoutBtn" style="background:var(--bg-secondary)">Batal</button>
-                    <button id="confirmLogoutBtn" style="background:var(--danger)">Keluar</button>
+                    <button id="cancelLogoutBtn" class="modal-btn modal-btn-secondary">Batal</button>
+                    <button id="confirmLogoutBtn" class="modal-btn modal-btn-danger">Keluar</button>
                 </div>
             </div>
         </div>
