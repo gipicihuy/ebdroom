@@ -6,3 +6,6 @@ wrangler.jsonc
 .gitignore
 README.md
 supabase-schema.sql
+worker.js
+.git
+.wrangler
