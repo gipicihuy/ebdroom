@@ -49,7 +49,7 @@
     }
     function currentAvatarSrc() {
         if (typeof currentProfile !== "undefined" && currentProfile && currentProfile.avatar_url) {
-            return currentProfile.avatar_url;
+            return (typeof toMediaUrl === "function" ? toMediaUrl(currentProfile.avatar_url) : currentProfile.avatar_url);
         }
         return "default-avatar.jpg";
     }

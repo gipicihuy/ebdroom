@@ -18,6 +18,24 @@ const {
 } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Reverse-proxy any file yang aslinya di-host di domain uploader eksternal
+// lewat /media/... di domain sendiri, biar domain uploader-nya nggak
+// keliatan di tab Network browser. Dipakai untuk avatar baru maupun lama.
+const PROXIED_MEDIA_HOSTS = ["athars.space"];
+window.toMediaUrl = function(url) {
+    if (!url || typeof url !== "string") return url;
+    if (url.startsWith("/media/")) return url; // udah diproxy
+    try {
+        const parsed = new URL(url, window.location.origin);
+        if (PROXIED_MEDIA_HOSTS.includes(parsed.hostname)) {
+            return "/media" + parsed.pathname + parsed.search;
+        }
+    } catch (e) {
+        // bukan URL absolut yang valid, biarin apa adanya
+    }
+    return url;
+};
+
 const loginScreen = document.getElementById("loginScreen");
 const userInfo = document.getElementById("userInfo");
 const userAvatar = document.getElementById("userAvatar");
@@ -283,7 +301,7 @@ window.saveDisplayName = async function() {
 };
 
 window.showAvatarModal = function() {
-    avatarPreview.src = getAvatarUrl() || "default-avatar.jpg";
+    avatarPreview.src = toMediaUrl(getAvatarUrl()) || "default-avatar.jpg";
     avatarModal.style.display = "flex";
     avatarInput.onchange = function(event) {
         const file = event.target.files[0];
@@ -323,8 +341,9 @@ window.saveAvatar = async function() {
             body: formData,
         });
         if (!uploadResponse.ok) throw new Error("Upload gagal, status " + uploadResponse.status);
-        const avatarUrl = (await uploadResponse.text()).trim();
-        if (!avatarUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + avatarUrl);
+        const rawAvatarUrl = (await uploadResponse.text()).trim();
+        if (!rawAvatarUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + rawAvatarUrl);
+        const avatarUrl = toMediaUrl(rawAvatarUrl);
         const {
             error: updateError
         } = await supabaseClient.from("profiles").update({
@@ -464,7 +483,7 @@ window.sendMessage = async function() {
         user_id: currentUser.id,
         user_name: currentProfile?.display_name || "",
         email: currentUser.email,
-        photo_url: currentProfile?.avatar_url || "",
+        photo_url: toMediaUrl(currentProfile?.avatar_url) || "",
         text: text
     };
     if (fileUrl) {
@@ -735,7 +754,7 @@ function renderMessage(messageData) {
     } else {
         messageBody = `${replyContent}${escapedText ? `<p>${escapedText}</p>` : ""}${fileContent ? `<div>${fileContent}</div>` : ""}`;
     }
-    messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(messageData.photo_url || "default-avatar.jpg")}" alt="${escapeHtml(
+    messageElement.innerHTML = `<img class="message-avatar" src="${escapeHtml(toMediaUrl(messageData.photo_url) || "default-avatar.jpg")}" alt="${escapeHtml(
         messageData.user_name
     )}" onerror="this.src='default-avatar.jpg'"><div class="message-content"><div class="user" style="color:${userColor}">${escapeHtml(messageData.user_name)}${isAdminUser ? '<span class="admin-badge">ADMIN</span>' : ""}${
         isKoruptor ? '<span class="korupsi-badge">DPR</span>' : ""
@@ -806,7 +825,7 @@ async function initChatSession(user) {
         }).eq("id", user.id);
     }
 
-    userAvatar.src = currentProfile.avatar_url || "default-avatar.jpg";
+    userAvatar.src = toMediaUrl(currentProfile.avatar_url) || "default-avatar.jpg";
     userName.textContent = currentProfile.display_name || user.email;
     messageInput.disabled = false;
     messageInput.placeholder = "Ketik pesan...";

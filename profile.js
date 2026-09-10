@@ -7,6 +7,21 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Reverse-proxy file dari domain uploader eksternal lewat /media/... di
+// domain sendiri, biar domain uploader-nya nggak keliatan di tab Network.
+const PROXIED_MEDIA_HOSTS = ["athars.space"];
+function toMediaUrl(url) {
+    if (!url || typeof url !== "string") return url;
+    if (url.startsWith("/media/")) return url;
+    try {
+        const parsed = new URL(url, window.location.origin);
+        if (PROXIED_MEDIA_HOSTS.includes(parsed.hostname)) {
+            return "/media" + parsed.pathname + parsed.search;
+        }
+    } catch (e) {}
+    return url;
+}
+
 const avatarWrap = document.getElementById("profileAvatarWrap");
 const avatarPreview = document.getElementById("profileAvatarPreview");
 const avatarLetter = document.getElementById("profileAvatarLetter");
@@ -35,7 +50,7 @@ function stringToColor(str) {
 
 function renderAvatar(url) {
     if (url) {
-        avatarPreview.src = url;
+        avatarPreview.src = toMediaUrl(url);
         avatarPreview.style.display = "block";
         avatarLetter.style.display = "none";
     } else {
@@ -101,9 +116,9 @@ async function uploadAvatar(file) {
         body: formData
     });
     if (!uploadResponse.ok) throw new Error("Upload gagal, status " + uploadResponse.status);
-    const avatarUrl = (await uploadResponse.text()).trim();
-    if (!avatarUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + avatarUrl);
-    return avatarUrl;
+    const rawAvatarUrl = (await uploadResponse.text()).trim();
+    if (!rawAvatarUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + rawAvatarUrl);
+    return toMediaUrl(rawAvatarUrl);
 }
 
 saveBtn.addEventListener("click", async () => {
