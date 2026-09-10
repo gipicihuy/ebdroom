@@ -92,26 +92,99 @@
         </div>
 
         <div class="header">
-            <div class="header-left">
-                <img src="eberardos.jpg" alt="Logo">
-                <h3>EBERARDOS</h3>
-            </div>
+            <button class="icon-btn menu-btn" id="menuBtn" aria-label="Buka menu" title="Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6H20M4 12H14M4 18H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <div class="header-center"></div>
+
             <div class="user-info" id="userInfo" style="display:none">
-                <div class="avatar-container">
+                <button class="avatar-btn" id="avatarBtn" aria-label="Akun" aria-haspopup="true" aria-expanded="false" title="Akun">
                     <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
-                    <button class="avatar-change-btn" onclick="showAvatarModal()" title="Ganti Foto Profil">
-                        <i class="fas fa-camera"></i>
+                </button>
+
+                <div class="account-dropdown" id="accountDropdown">
+                    <div class="account-dropdown-header">
+                        <img id="dropdownAvatar" class="dropdown-avatar" src="" alt="Avatar">
+                        <div class="dropdown-user-meta">
+                            <span class="dropdown-user-name" id="dropdownUserName"></span>
+                            <span class="dropdown-user-email" id="dropdownUserEmail"></span>
+                        </div>
+                    </div>
+                    <div class="account-dropdown-menu">
+                        <button class="dropdown-item" id="dropdownProfileBtn">
+                            <i data-lucide="user"></i>
+                            <span>Profile</span>
+                        </button>
+                        <button class="dropdown-item" id="dropdownSettingsBtn">
+                            <i data-lucide="settings"></i>
+                            <span>Settings</span>
+                        </button>
+                        <button class="dropdown-item" id="dropdownNotificationsBtn">
+                            <i data-lucide="bell"></i>
+                            <span>Notifications</span>
+                        </button>
+                    </div>
+                    <div class="dropdown-separator"></div>
+                    <button class="dropdown-item dropdown-item-danger" id="dropdownLogoutBtn">
+                        <i data-lucide="log-out"></i>
+                        <span>Log out</span>
                     </button>
                 </div>
-                <span id="userName"></span>
-                <button class="edit-btn" onclick="showNameModal()" title="Ganti Nama">
-                    <i class="fas fa-pencil-alt"></i>
-                </button>
-                <button class="logout-btn" onclick="signOut()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
             </div>
         </div>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar" id="sidebar" role="dialog" aria-label="Menu">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <img src="eberardos.jpg" alt="Eberardos" class="sidebar-brand-logo">
+                    <span class="sidebar-brand-name">Eberardos</span>
+                </div>
+                <button class="icon-btn sidebar-close-btn" id="sidebarCloseBtn" aria-label="Tutup menu" title="Tutup">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">General</span>
+                    <button class="sidebar-nav-item active" id="navChatBtn">
+                        <i data-lucide="message-circle"></i>
+                        <span>Chat</span>
+                    </button>
+                    <button class="sidebar-nav-item" id="navUserBtn">
+                        <i data-lucide="user"></i>
+                        <span>User</span>
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">Other</span>
+                    <button class="sidebar-nav-item" id="navSettingsBtn">
+                        <i data-lucide="settings"></i>
+                        <span>Settings</span>
+                    </button>
+                    <button class="sidebar-nav-item" id="navAppearanceBtn">
+                        <i data-lucide="sun-moon"></i>
+                        <span>Appearance</span>
+                    </button>
+                </div>
+            </div>
+
+            <button class="sidebar-profile-card" id="sidebarProfileCard">
+                <img id="sidebarProfileAvatar" class="sidebar-profile-avatar" src="default-avatar.jpg" alt="Avatar">
+                <div class="sidebar-profile-info">
+                    <span class="sidebar-profile-name" id="sidebarProfileName">Guest</span>
+                    <span class="sidebar-profile-sub">Account</span>
+                </div>
+                <i data-lucide="chevron-right" class="sidebar-profile-chevron"></i>
+            </button>
+        </div>
+
+        <div class="app-toast" id="appToast"></div>
 
         <div class="messages" id="messages"></div>
 
@@ -218,7 +291,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="env-config.js"></script>
     <script src="c.js"></script>
+    <script src="sidebar.js"></script>
 </body>
 </html>
