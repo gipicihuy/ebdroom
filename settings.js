@@ -15,6 +15,13 @@ const confirmPasswordInput = document.getElementById("confirmPasswordInput");
 const savePasswordBtn = document.getElementById("savePasswordBtn");
 const passwordStatus = document.getElementById("passwordStatus");
 const guestOverlay = document.getElementById("settingsGuestOverlay");
+const appVersionEl = document.getElementById("settingsAppVersion");
+
+if (appVersionEl) {
+    const version = window.__ENV__?.APP_VERSION || "1.0.0";
+    const buildLabel = window.__ENV__?.BUILD_LABEL;
+    appVersionEl.textContent = buildLabel ? `Versi ${version} · ${buildLabel}` : `Versi ${version}`;
+}
 
 let currentUser = null;
 
