@@ -61,7 +61,6 @@ let lastRenderedTimestamp = null;
 const GROUP_TIME_THRESHOLD = 5 * 60 * 1000;
 let messagesChannel = null;
 let typingChannel = null;
-let typingIndicatorEl = null;
 
 function escapeHtml(text) {
     const map = {
@@ -555,97 +554,6 @@ async function setTypingStatus(typing) {
     });
 }
 
-// ── TYPING INDICATOR ─────────────────────────────────────────
-// Elemen "nama • • •" ini BUKAN message — tidak pernah disimpan/dibaca
-// dari tabel messages, cuma DOM node yang selalu didorong ke posisi
-// paling bawah #messages tiap kali ada pesan baru masuk.
-function ensureTypingIndicatorElement() {
-    if (typingIndicatorEl) return typingIndicatorEl;
-    const row = document.createElement("div");
-    row.className = "typing-indicator-row";
-    row.id = "typingIndicatorRow";
-    row.setAttribute("aria-live", "polite");
-
-    const nameEl = document.createElement("span");
-    nameEl.className = "typing-indicator-name";
-
-    const dotsEl = document.createElement("span");
-    dotsEl.className = "typing-dots";
-    for (let i = 0; i < 3; i++) {
-        const dot = document.createElement("span");
-        dot.textContent = "•";
-        dotsEl.appendChild(dot);
-    }
-
-    row.appendChild(nameEl);
-    row.appendChild(dotsEl);
-    typingIndicatorEl = row;
-    return row;
-}
-
-function buildTypingNameParts(typingUsers) {
-    if (typingUsers.length === 1) {
-        return [{
-            text: typingUsers[0].user_name || "Seseorang",
-            colored: true
-        }];
-    }
-    if (typingUsers.length === 2) {
-        return [{
-            text: typingUsers[0].user_name || "Seseorang",
-            colored: true
-        }, {
-            text: ", ",
-            colored: false
-        }, {
-            text: typingUsers[1].user_name || "Seseorang",
-            colored: true
-        }];
-    }
-    const rest = typingUsers.length - 1;
-    return [{
-        text: typingUsers[0].user_name || "Seseorang",
-        colored: true
-    }, {
-        text: ` dan ${rest} lainnya`,
-        colored: false
-    }];
-}
-
-function renderTypingIndicator(typingUsers) {
-    const messagesContainer = document.getElementById("messages");
-    if (!messagesContainer) return;
-    const row = ensureTypingIndicatorElement();
-    // Selalu jadi child paling akhir, biar posisinya di bawah message terakhir.
-    messagesContainer.appendChild(row);
-
-    if (!typingUsers || typingUsers.length === 0) {
-        row.classList.remove("visible");
-        return;
-    }
-
-    const nameEl = row.querySelector(".typing-indicator-name");
-    nameEl.innerHTML = "";
-    buildTypingNameParts(typingUsers).forEach((part) => {
-        const span = document.createElement("span");
-        span.textContent = part.text;
-        if (part.colored) {
-            span.style.color = stringToColor(part.text);
-        }
-        nameEl.appendChild(span);
-    });
-
-    row.classList.add("visible");
-
-    // Cuma auto-scroll kalau user memang lagi di posisi paling bawah;
-    // kalau lagi scroll baca chat lama, posisi dibiarkan apa adanya.
-    if (isUserAtBottom) {
-        setTimeout(() => {
-            scrollToBottom();
-        }, 100);
-    }
-}
-
 function renderMessage(messageData) {
     const messageId = messageData.id;
     if (messageElements[messageId]) {
@@ -724,10 +632,6 @@ function renderMessage(messageData) {
     }</div></div>`;
     document.getElementById("messages").appendChild(messageElement);
     messageElements[messageId] = messageElement;
-    if (typingIndicatorEl) {
-        // appendChild pada node yang udah ada di DOM = pindahin ke posisi akhir.
-        document.getElementById("messages").appendChild(typingIndicatorEl);
-    }
     if (isUserAtBottom) {
         setTimeout(() => {
             scrollToBottom();
@@ -803,12 +707,10 @@ async function initChatSession(user) {
                 data
             } = await supabaseClient.from("typing_status").select("*").eq("typing", true);
             const typingUsers = (data || [])
-                .filter((t) => t.user_id !== currentUser.id)
-                .map((t) => ({
-                    user_id: t.user_id,
-                    user_name: t.user_name
-                }));
-            renderTypingIndicator(typingUsers);
+                .filter((t) => t.user_name !== currentProfile.display_name)
+                .map((t) => t.user_name);
+            const typingStatus = document.getElementById("typingStatus");
+            typingStatus.innerHTML = typingUsers.length > 0 ? `<div style="padding:5px 15px;font-size:0.8rem;color:var(--text-muted)">${typingUsers.join(", ")} sedang mengetik...</div>` : "";
         })
         .subscribe();
 
@@ -819,7 +721,6 @@ async function initChatSession(user) {
         ascending: true
     });
     (existingMessages || []).forEach((m) => renderMessage(m));
-    renderTypingIndicator([]); // siapin elemen indikator (tersembunyi) di bawah list
     setTimeout(() => {
         scrollToBottom();
     }, 1500);
@@ -852,7 +753,6 @@ function endChatSession() {
     lastMessageDate = null;
     lastRenderedUserId = null;
     lastRenderedTimestamp = null;
-    typingIndicatorEl = null; // innerHTML="" di atas udah lepas node lama dari DOM
     cleanupObjectUrls();
     if (messagesChannel) {
         supabaseClient.removeChannel(messagesChannel);
@@ -904,7 +804,7 @@ document.addEventListener("DOMContentLoaded", function() {
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
             setTypingStatus(false);
-        }, 1500);
+        }, 3000);
     });
     messageInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
