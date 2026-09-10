@@ -1,0 +1,116 @@
+const SUPABASE_URL = window.__ENV__?.SUPABASE_URL;
+const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    document.body.innerHTML = "<p style='color:#f55;padding:2rem;font-family:sans-serif'>Konfigurasi Supabase belum ke-load.</p>";
+    throw new Error("SUPABASE_URL atau SUPABASE_ANON_KEY kosong");
+}
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const loginProviderEl = document.getElementById("settingsLoginProvider");
+const passwordSection = document.getElementById("passwordSection");
+const newPasswordInput = document.getElementById("newPasswordInput");
+const confirmPasswordInput = document.getElementById("confirmPasswordInput");
+const savePasswordBtn = document.getElementById("savePasswordBtn");
+const passwordStatus = document.getElementById("passwordStatus");
+const notificationsToggle = document.getElementById("notificationsToggle");
+const logoutBtn = document.getElementById("settingsLogoutBtn");
+const logoutModal = document.getElementById("settingsLogoutModal");
+const cancelLogoutBtn = document.getElementById("cancelLogoutBtn");
+const confirmLogoutBtn = document.getElementById("confirmLogoutBtn");
+const guestOverlay = document.getElementById("settingsGuestOverlay");
+
+let currentUser = null;
+
+function setPasswordStatus(message, type) {
+    passwordStatus.textContent = message || "";
+    passwordStatus.classList.remove("error", "success");
+    if (type) passwordStatus.classList.add(type);
+}
+
+notificationsToggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    notificationsToggle.checked = false;
+    alert("Notifikasi belum tersedia");
+});
+
+savePasswordBtn.addEventListener("click", async () => {
+    const newPassword = newPasswordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    if (newPassword.length < 6) {
+        setPasswordStatus("Password minimal 6 karakter.", "error");
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        setPasswordStatus("Konfirmasi password tidak cocok.", "error");
+        return;
+    }
+    savePasswordBtn.disabled = true;
+    setPasswordStatus("Menyimpan...", null);
+    try {
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        newPasswordInput.value = "";
+        confirmPasswordInput.value = "";
+        setPasswordStatus("Password berhasil diubah.", "success");
+    } catch (error) {
+        console.error("Error updating password:", error);
+        setPasswordStatus("Gagal mengubah password: " + error.message, "error");
+    } finally {
+        savePasswordBtn.disabled = false;
+    }
+});
+
+logoutBtn.addEventListener("click", () => {
+    logoutModal.style.display = "flex";
+});
+cancelLogoutBtn.addEventListener("click", () => {
+    logoutModal.style.display = "none";
+});
+confirmLogoutBtn.addEventListener("click", async () => {
+    confirmLogoutBtn.disabled = true;
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) {
+        console.error("Error during sign out:", error);
+        confirmLogoutBtn.disabled = false;
+        return;
+    }
+    window.location.href = "/";
+});
+
+function applyProviderInfo(user) {
+    const provider = user.app_metadata?.provider || "email";
+    if (provider === "google") {
+        loginProviderEl.textContent = `Google (${user.email || ""})`;
+        passwordSection.style.display = "none";
+    } else {
+        loginProviderEl.textContent = `Email & Password (${user.email || ""})`;
+        passwordSection.style.display = "block";
+    }
+}
+
+function showGuestOverlay() {
+    guestOverlay.style.display = "flex";
+}
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+    const user = session?.user || null;
+    if (user) {
+        currentUser = user;
+        applyProviderInfo(user);
+        guestOverlay.style.display = "none";
+    } else {
+        currentUser = null;
+        showGuestOverlay();
+    }
+});
+
+supabaseClient.auth.getSession().then(({ data: { session } }) => {
+    const user = session?.user || null;
+    if (user) {
+        currentUser = user;
+        applyProviderInfo(user);
+    } else {
+        showGuestOverlay();
+    }
+});

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Pengaturan - Eberardos Room Chat</title>
+    <link rel="icon" href="https://i.ibb.co/xcqmzxt/20250818-192240.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="settings-page">
+        <header class="settings-topbar">
+            <a href="/" class="settings-back-btn" aria-label="Kembali">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <span class="settings-topbar-title">Pengaturan</span>
+            <span class="settings-topbar-spacer"></span>
+        </header>
+
+        <main class="settings-main">
+            <section class="settings-section">
+                <span class="settings-section-title">Akun</span>
+                <div class="settings-group">
+                    <a href="/profile" class="settings-row settings-row-link">
+                        <div class="settings-row-icon"><i class="fas fa-user"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Edit Profil</span>
+                            <span class="settings-row-sub">Ubah nama & foto tampilan</span>
+                        </div>
+                        <i class="fas fa-chevron-right settings-row-chevron"></i>
+                    </a>
+                    <div class="settings-row">
+                        <div class="settings-row-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Login via</span>
+                            <span class="settings-row-sub" id="settingsLoginProvider">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-section" id="passwordSection" style="display:none">
+                <span class="settings-section-title">Ganti Password</span>
+                <div class="settings-group settings-form-group">
+                    <div class="settings-form-row">
+                        <label for="newPasswordInput">Password Baru</label>
+                        <input type="password" id="newPasswordInput" placeholder="Minimal 6 karakter">
+                    </div>
+                    <div class="settings-form-row">
+                        <label for="confirmPasswordInput">Konfirmasi Password</label>
+                        <input type="password" id="confirmPasswordInput" placeholder="Ulangi password baru">
+                    </div>
+                    <button type="button" class="settings-save-btn" id="savePasswordBtn">Simpan Password</button>
+                    <p class="settings-status" id="passwordStatus"></p>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <span class="settings-section-title">Notifikasi</span>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <div class="settings-row-icon"><i class="fas fa-bell"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Notifikasi Pesan Baru</span>
+                            <span class="settings-row-sub">Belum tersedia</span>
+                        </div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="notificationsToggle">
+                            <span class="settings-toggle-track"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <span class="settings-section-title">Tampilan</span>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <div class="settings-row-icon"><i class="fas fa-moon"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Tema Gelap</span>
+                            <span class="settings-row-sub">Aktif otomatis, belum ada mode terang</span>
+                        </div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" checked disabled>
+                            <span class="settings-toggle-track"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <span class="settings-section-title">Tentang</span>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <div class="settings-row-icon"><i class="fas fa-circle-info"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Eberardos Room Chat</span>
+                            <span class="settings-row-sub">Versi 1.0.0</span>
+                        </div>
+                    </div>
+                    <a href="https://github.com/gipicihuy/ebdroom" target="_blank" rel="noopener" class="settings-row settings-row-link">
+                        <div class="settings-row-icon"><i class="fab fa-github"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Source Code</span>
+                            <span class="settings-row-sub">github.com/gipicihuy/ebdroom</span>
+                        </div>
+                        <i class="fas fa-chevron-right settings-row-chevron"></i>
+                    </a>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <div class="settings-group">
+                    <button type="button" class="settings-row settings-row-danger" id="settingsLogoutBtn">
+                        <div class="settings-row-icon"><i class="fas fa-arrow-right-from-bracket"></i></div>
+                        <div class="settings-row-text">
+                            <span class="settings-row-label">Keluar</span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="settingsLogoutModal" class="settings-modal" style="display:none">
+        <div class="settings-modal-content">
+            <h3>Konfirmasi Keluar</h3>
+            <p>Lu yakin mau keluar? Lu bakal perlu login lagi buat lanjut.</p>
+            <div class="settings-modal-buttons">
+                <button id="cancelLogoutBtn" class="settings-modal-btn-secondary">Batal</button>
+                <button id="confirmLogoutBtn" class="settings-modal-btn-danger">Keluar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsGuestOverlay" class="settings-guest-overlay" style="display:none">
+        <div class="settings-guest-box">
+            <h3>Login dulu ya</h3>
+            <p>Kamu harus login untuk buka pengaturan.</p>
+            <a href="/" class="settings-guest-btn">Ke Halaman Chat</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="env-config.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>

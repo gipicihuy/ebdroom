@@ -87,7 +87,7 @@
     });
     navSettingsBtn && navSettingsBtn.addEventListener("click", () => {
         closeSidebar();
-        requireLogin(() => window.showNameModal && window.showNameModal());
+        requireLogin(() => { window.location.href = "/settings"; });
     });
     navAppearanceBtn && navAppearanceBtn.addEventListener("click", () => {
         closeSidebar();
@@ -126,7 +126,7 @@
     });
     dropdownSettingsBtn && dropdownSettingsBtn.addEventListener("click", () => {
         closeDropdown();
-        window.showNameModal && window.showNameModal();
+        window.location.href = "/settings";
     });
     dropdownNotificationsBtn && dropdownNotificationsBtn.addEventListener("click", () => {
         closeDropdown();
