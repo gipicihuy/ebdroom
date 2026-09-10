@@ -13,11 +13,6 @@ const newPasswordInput = document.getElementById("newPasswordInput");
 const confirmPasswordInput = document.getElementById("confirmPasswordInput");
 const savePasswordBtn = document.getElementById("savePasswordBtn");
 const passwordStatus = document.getElementById("passwordStatus");
-const notificationsToggle = document.getElementById("notificationsToggle");
-const logoutBtn = document.getElementById("settingsLogoutBtn");
-const logoutModal = document.getElementById("settingsLogoutModal");
-const cancelLogoutBtn = document.getElementById("cancelLogoutBtn");
-const confirmLogoutBtn = document.getElementById("confirmLogoutBtn");
 const guestOverlay = document.getElementById("settingsGuestOverlay");
 
 let currentUser = null;
@@ -27,12 +22,6 @@ function setPasswordStatus(message, type) {
     passwordStatus.classList.remove("error", "success");
     if (type) passwordStatus.classList.add(type);
 }
-
-notificationsToggle.addEventListener("click", (event) => {
-    event.preventDefault();
-    notificationsToggle.checked = false;
-    alert("Notifikasi belum tersedia");
-});
 
 savePasswordBtn.addEventListener("click", async () => {
     const newPassword = newPasswordInput.value;
@@ -59,23 +48,6 @@ savePasswordBtn.addEventListener("click", async () => {
     } finally {
         savePasswordBtn.disabled = false;
     }
-});
-
-logoutBtn.addEventListener("click", () => {
-    logoutModal.style.display = "flex";
-});
-cancelLogoutBtn.addEventListener("click", () => {
-    logoutModal.style.display = "none";
-});
-confirmLogoutBtn.addEventListener("click", async () => {
-    confirmLogoutBtn.disabled = true;
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) {
-        console.error("Error during sign out:", error);
-        confirmLogoutBtn.disabled = false;
-        return;
-    }
-    window.location.href = "/";
 });
 
 function applyProviderInfo(user) {
