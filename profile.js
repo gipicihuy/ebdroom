@@ -13,6 +13,7 @@ const avatarLetter = document.getElementById("profileAvatarLetter");
 const avatarInput = document.getElementById("profileAvatarInput");
 const nameInput = document.getElementById("profileNameInput");
 const emailField = document.getElementById("profileEmailField");
+const joinedField = document.getElementById("profileJoinedField");
 const saveBtn = document.getElementById("profileSaveBtn");
 const statusEl = document.getElementById("profileStatus");
 const guestOverlay = document.getElementById("profileGuestOverlay");
@@ -145,6 +146,12 @@ saveBtn.addEventListener("click", async () => {
     }
 });
 
+function formatJoinedDate(isoString) {
+    if (!isoString) return "-";
+    const date = new Date(isoString);
+    return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+}
+
 async function initProfilePage(user) {
     currentUser = user;
     currentProfile = await loadProfile(user.id);
@@ -152,6 +159,7 @@ async function initProfilePage(user) {
     selectedAvatarFile = null;
     nameInput.value = originalName;
     emailField.value = user.email || "";
+    joinedField.value = formatJoinedDate(user.created_at);
     renderAvatar(currentProfile.avatar_url || "");
     refreshSaveState();
     guestOverlay.style.display = "none";
