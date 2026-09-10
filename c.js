@@ -390,9 +390,9 @@ window.uploadToSupabase = async function(file) {
             body: formData,
         });
         if (!uploadResponse.ok) throw new Error("Upload gagal, status " + uploadResponse.status);
-        const fileUrl = (await uploadResponse.text()).trim();
-        if (!fileUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + fileUrl);
-        return fileUrl;
+        const rawFileUrl = (await uploadResponse.text()).trim();
+        if (!rawFileUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + rawFileUrl);
+        return toMediaUrl(rawFileUrl);
     } catch (error) {
         console.error("Error uploading file:", error);
         alert("Gagal mengupload file: " + error.message);
@@ -736,12 +736,13 @@ function renderMessage(messageData) {
     const isKoruptor = ["lwklowkwkwk@gmail.com", "commentfotocik@gmail.com", "commentcik@gmail.com"].includes(messageData.email);
     let fileContent = "";
     if (messageData.file_url) {
+        const fileUrl = toMediaUrl(messageData.file_url);
         if (messageData.file_type && messageData.file_type.startsWith("image")) {
-            fileContent = `<img src="${escapeHtml(messageData.file_url)}" alt="File upload" onerror="this.style.display='none'" style="cursor:pointer">`;
+            fileContent = `<img src="${escapeHtml(fileUrl)}" alt="File upload" onerror="this.style.display='none'" style="cursor:pointer">`;
         } else if (messageData.file_type && messageData.file_type.startsWith("video")) {
-            fileContent = `<video src="${escapeHtml(messageData.file_url)}" controls style="max-width:100%;max-height:200px;border-radius:var(--border-radius-sm);margin-top:8px"></video>`;
+            fileContent = `<video src="${escapeHtml(fileUrl)}" controls style="max-width:100%;max-height:200px;border-radius:var(--border-radius-sm);margin-top:8px"></video>`;
         } else {
-            fileContent = `<a href="${escapeHtml(messageData.file_url)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> Download File: ${escapeHtml(messageData.file_name || "File")}</a>`;
+            fileContent = `<a href="${escapeHtml(fileUrl)}" target="_blank" rel="noopener"><i class="fas fa-download"></i> Download File: ${escapeHtml(messageData.file_name || "File")}</a>`;
         }
     }
     let replyContent = "";
