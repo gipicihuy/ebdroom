@@ -1,6 +1,31 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script>
+    (function () {
+        var oldHosts = ["chat.eberardos.my.id", "eberardos.my.id", "www.eberardos.my.id"];
+        var newUrl = "https://chat.eberardos.eu.cc";
+        if (oldHosts.indexOf(window.location.hostname) === -1) return;
+        document.open();
+        document.write(
+            "<!DOCTYPE html><html lang=\"id\"><head><meta charset=\"UTF-8\">" +
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+            "<title>Domain Pindah</title>" +
+            "<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f0f0f;color:#eee;font-family:sans-serif;text-align:center;padding:2rem;box-sizing:border-box}" +
+            ".box{max-width:420px}h1{font-size:1.4rem;margin-bottom:.5rem}p{color:#aaa;line-height:1.5}" +
+            "a{display:inline-block;margin-top:1.2rem;background:#dc2626;color:#fff;text-decoration:none;padding:.8rem 1.6rem;border-radius:8px;font-weight:600}" +
+            "small{display:block;margin-top:1rem;color:#666}</style></head><body>" +
+            "<div class=\"box\"><h1>Domain udah pindah</h1>" +
+            "<p>Ebdroom sekarang ada di <b>chat.eberardos.eu.cc</b>. Domain <b>eberardos.my.id</b> bakal segera nonaktif, langsung ke sana ya.</p>" +
+            "<a href=\"" + newUrl + "\">Buka chat.eberardos.eu.cc</a>" +
+            "<small>Otomatis kepindah dalam <span id=\"cd\">5</span> detik...</small></div>" +
+            "<script>var n=5;var el=document.getElementById('cd');var t=setInterval(function(){n--;if(el)el.textContent=n;if(n<=0){clearInterval(t);window.location.replace('" + newUrl + "');}},1000);<" + "/script>" +
+            "</body></html>"
+        );
+        document.close();
+        if (window.stop) window.stop();
+    })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>Eberardos Room Chat</title>
@@ -89,7 +114,6 @@
         </div>
 
         <div class="messages" id="messages"></div>
-        <div id="typingStatus"></div>
 
         <div class="scroll-button" id="scrollBtn" onclick="scrollToBottom()">
             <i class="fas fa-chevron-down"></i>
@@ -178,6 +202,7 @@
         </div>
 
         <div class="input-area" id="inputAreaBottom">
+            <div id="typingStatus"></div>
             <div class="input-wrapper">
                 <div class="input-container">
                     <div class="file-upload-btn" title="Upload File">

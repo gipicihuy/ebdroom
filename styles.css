@@ -444,6 +444,9 @@ body {
     padding: 12px 14px 18px;
     z-index: 50;
 }
+#typingStatus:empty { display: none; }
+#typingStatus { min-height: 20px; }
+#typingStatus div { padding: 0 4px 6px !important; }
 .input-wrapper { max-width: 600px; margin: 0 auto; }
 .input-container {
     display: flex;
