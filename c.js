@@ -839,6 +839,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (user) {
             currentUser = user;
             initChatSession(user);
+            if (window.location.hash) {
+                window.history.replaceState(null, "", window.location.pathname + window.location.search);
+            }
         } else {
             currentUser = null;
             currentProfile = null;
