@@ -1,3 +1,5 @@
+html, body { height: auto; min-height: 100%; }
+body { display: block; }
 .profile-page { min-height: 100vh; width: 100%; display: flex; flex-direction: column; background: var(--bg-primary); }
 .profile-topbar { display: grid; grid-template-columns: 44px 1fr 60px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: var(--bg-primary); z-index: 5; }
 .profile-back-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--text-primary); background: var(--bg-secondary); border: 1px solid var(--border-color); text-decoration: none; transition: var(--transition); }
@@ -6,11 +8,11 @@
 .profile-save-link { justify-self: end; background: none; border: none; font-size: 1rem; font-weight: 600; color: var(--accent-primary); cursor: pointer; padding: 8px 4px; }
 .profile-save-link:disabled { color: var(--text-muted); cursor: not-allowed; }
 .profile-main { flex: 1; padding: 0 0 60px; }
-.profile-avatar-section { display: flex; justify-content: center; padding: 32px 0 28px; }
-.profile-avatar-wrap { position: relative; width: 140px; height: 140px; cursor: pointer; }
+.profile-avatar-section { display: flex; justify-content: center; padding: 28px 0 24px; }
+.profile-avatar-wrap { position: relative; width: 100px; height: 100px; cursor: pointer; }
 .profile-avatar-wrap img, .profile-avatar-letter { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; border: 1px solid var(--border-color); }
-.profile-avatar-letter { display: flex; align-items: center; justify-content: center; font-size: 3.4rem; font-weight: 700; color: #fff; box-sizing: border-box; }
-.profile-avatar-badge { position: absolute; right: -2px; bottom: -2px; width: 40px; height: 40px; border-radius: 50%; background: #fff; color: #111; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 3px solid var(--bg-primary); }
+.profile-avatar-letter { display: flex; align-items: center; justify-content: center; font-size: 2.4rem; font-weight: 700; color: #fff; box-sizing: border-box; }
+.profile-avatar-badge { position: absolute; right: -2px; bottom: -2px; width: 32px; height: 32px; border-radius: 50%; background: #fff; color: #111; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: 3px solid var(--bg-primary); }
 .profile-field-list { border-top: 1px solid var(--border-color); }
 .profile-field-row { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-bottom: 1px solid var(--border-color); }
 .profile-field-row label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
