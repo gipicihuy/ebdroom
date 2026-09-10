@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Profil - Eberardos Room Chat</title>
+    <link rel="icon" href="https://i.ibb.co/xcqmzxt/20250818-192240.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+    <div class="profile-page">
+        <header class="profile-topbar">
+            <a href="/" class="profile-back-btn" aria-label="Kembali">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <span class="profile-topbar-title">Edit Profil</span>
+        </header>
+
+        <main class="profile-main">
+            <div class="profile-card">
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar-wrap" id="profileAvatarWrap">
+                        <img id="profileAvatarPreview" src="default-avatar.jpg" alt="Avatar">
+                        <div class="profile-avatar-overlay">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="profileAvatarInput" accept="image/*" style="display:none">
+                    <button type="button" class="profile-avatar-change-btn" id="profileAvatarChangeBtn">Ganti Foto</button>
+                </div>
+
+                <div class="profile-field">
+                    <label for="profileNameInput">Nama Tampilan</label>
+                    <input type="text" id="profileNameInput" maxlength="20" placeholder="Masukkan nama">
+                    <span class="char-count" id="profileNameCharCount">0/20</span>
+                </div>
+
+                <div class="profile-field">
+                    <label>Email</label>
+                    <input type="text" id="profileEmailField" disabled>
+                </div>
+
+                <div class="profile-actions">
+                    <a href="/" class="profile-cancel-btn">Batal</a>
+                    <button type="button" class="profile-save-btn" id="profileSaveBtn">Simpan Perubahan</button>
+                </div>
+                <p class="profile-status" id="profileStatus"></p>
+            </div>
+        </main>
+    </div>
+
+    <div id="profileGuestOverlay" class="profile-guest-overlay" style="display:none">
+        <div class="profile-guest-box">
+            <h3>Login dulu ya</h3>
+            <p>Kamu harus login untuk mengedit profil.</p>
+            <a href="/" class="profile-save-btn">Ke Halaman Chat</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="env-config.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>

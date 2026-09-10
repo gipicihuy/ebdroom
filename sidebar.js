@@ -95,7 +95,7 @@
     });
     sidebarProfileCard && sidebarProfileCard.addEventListener("click", () => {
         closeSidebar();
-        requireLogin(() => window.showAvatarModal && window.showAvatarModal());
+        requireLogin(() => { window.location.href = "/profile"; });
     });
 
     // ── Account dropdown open/close ──
@@ -122,7 +122,7 @@
 
     dropdownProfileBtn && dropdownProfileBtn.addEventListener("click", () => {
         closeDropdown();
-        window.showAvatarModal && window.showAvatarModal();
+        window.location.href = "/profile";
     });
     dropdownSettingsBtn && dropdownSettingsBtn.addEventListener("click", () => {
         closeDropdown();
