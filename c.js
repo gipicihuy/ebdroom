@@ -315,16 +315,15 @@ window.saveAvatar = async function() {
         return;
     }
     try {
-        const fileName = `${Date.now()}_${selectedAvatar.name.replace(/\s+/g, "_")}`;
-        const {
-            data,
-            error
-        } = await supabaseClient.storage.from("chat-avatars").upload(fileName, selectedAvatar);
-        if (error) throw new Error(error.message);
-        const {
-            data: urlData
-        } = supabaseClient.storage.from("chat-avatars").getPublicUrl(data.path);
-        const avatarUrl = urlData.publicUrl;
+        const formData = new FormData();
+        formData.append("file", selectedAvatar);
+        const uploadResponse = await fetch("https://athars.space/upload.php", {
+            method: "POST",
+            body: formData,
+        });
+        if (!uploadResponse.ok) throw new Error("Upload gagal, status " + uploadResponse.status);
+        const avatarUrl = (await uploadResponse.text()).trim();
+        if (!avatarUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + avatarUrl);
         const {
             error: updateError
         } = await supabaseClient.from("profiles").update({
@@ -364,18 +363,18 @@ window.cancelUpload = function() {
 
 window.uploadToSupabase = async function(file) {
     try {
-        const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
-        const {
-            data,
-            error
-        } = await supabaseClient.storage.from("chat-files").upload(fileName, file);
-        if (error) throw new Error(error.message);
-        const {
-            data: urlData
-        } = supabaseClient.storage.from("chat-files").getPublicUrl(data.path);
-        return urlData.publicUrl;
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadResponse = await fetch("https://athars.space/upload.php", {
+            method: "POST",
+            body: formData,
+        });
+        if (!uploadResponse.ok) throw new Error("Upload gagal, status " + uploadResponse.status);
+        const fileUrl = (await uploadResponse.text()).trim();
+        if (!fileUrl.startsWith("http")) throw new Error("Response uploader tidak valid: " + fileUrl);
+        return fileUrl;
     } catch (error) {
-        console.error("Error uploading to Supabase:", error);
+        console.error("Error uploading file:", error);
         alert("Gagal mengupload file: " + error.message);
         return null;
     }
