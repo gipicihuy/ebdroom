@@ -912,12 +912,12 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("showRegister").addEventListener("click", function(e) {
         e.preventDefault();
         document.getElementById("emailLoginForm").style.display = "none";
-        document.getElementById("emailRegisterForm").style.display = "block";
+        document.getElementById("emailRegisterForm").style.display = "flex";
     });
     document.getElementById("showLogin").addEventListener("click", function(e) {
         e.preventDefault();
         document.getElementById("emailRegisterForm").style.display = "none";
-        document.getElementById("emailLoginForm").style.display = "block";
+        document.getElementById("emailLoginForm").style.display = "flex";
     });
     document.getElementById("confirmLogoutBtn").addEventListener("click", async () => {
         clearTimeout(typingTimeout);
