@@ -1,5 +1,4 @@
 const fs = require("fs");
-const { execSync } = require("child_process");
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
@@ -9,29 +8,39 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const pkg = JSON.parse(fs.readFileSync("./package.json", "utf8"));
+const [major, minor] = pkg.version.split(".");
 
-function getBuildLabel() {
+async function getPatchNumber() {
   try {
-    const count = execSync("git rev-list --count HEAD").toString().trim();
-    if (count && count !== "1") return `build ${count}`;
+    const token = process.env.GH_API_TOKEN;
+    const headers = { "User-Agent": "ebdroom-build" };
+    if (token) headers["Authorization"] = `token ${token}`;
+    const res = await fetch("https://api.github.com/repos/gipicihuy/ebdroom/commits?per_page=1&sha=main", { headers });
+    if (!res.ok) {
+      console.warn("GitHub API respon non-OK:", res.status);
+      return null;
+    }
+    const link = res.headers.get("link") || "";
+    const match = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
+    if (match) return match[1];
   } catch (err) {
-    console.warn("Gagal ambil git commit count:", err.message);
+    console.warn("Gagal ambil commit count dari GitHub API:", err.message);
   }
-  try {
-    const sha = (process.env.VERCEL_GIT_COMMIT_SHA || execSync("git rev-parse HEAD").toString().trim()).slice(0, 7);
-    if (sha) return sha;
-  } catch (err) {
-    console.warn("Gagal ambil git commit sha:", err.message);
-  }
-  return "";
+  return null;
 }
 
-const content = `window.__ENV__ = ${JSON.stringify({
-  SUPABASE_URL: supabaseUrl,
-  SUPABASE_ANON_KEY: supabaseAnonKey,
-  APP_VERSION: pkg.version,
-  BUILD_LABEL: getBuildLabel(),
-})};\n`;
+async function build() {
+  const patch = await getPatchNumber();
+  const version = patch ? `${major}.${minor}.${patch}` : pkg.version;
 
-fs.writeFileSync("env-config.js", content);
-console.log("env-config.js berhasil dibuat.");
+  const content = `window.__ENV__ = ${JSON.stringify({
+    SUPABASE_URL: supabaseUrl,
+    SUPABASE_ANON_KEY: supabaseAnonKey,
+    APP_VERSION: version,
+  })};\n`;
+
+  fs.writeFileSync("env-config.js", content);
+  console.log("env-config.js berhasil dibuat. Versi:", version);
+}
+
+build();
