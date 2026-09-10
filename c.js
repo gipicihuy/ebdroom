@@ -318,7 +318,7 @@ window.saveAvatar = async function() {
     try {
         const formData = new FormData();
         formData.append("file", selectedAvatar);
-        const uploadResponse = await fetch("https://athars.space/upload.php", {
+        const uploadResponse = await fetch("/api/upload", {
             method: "POST",
             body: formData,
         });
@@ -366,7 +366,7 @@ window.uploadToSupabase = async function(file) {
     try {
         const formData = new FormData();
         formData.append("file", file);
-        const uploadResponse = await fetch("https://athars.space/upload.php", {
+        const uploadResponse = await fetch("/api/upload", {
             method: "POST",
             body: formData,
         });
