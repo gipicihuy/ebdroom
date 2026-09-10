@@ -61,6 +61,7 @@ let lastRenderedTimestamp = null;
 const GROUP_TIME_THRESHOLD = 5 * 60 * 1000;
 let messagesChannel = null;
 let typingChannel = null;
+let typingIndicatorEl = null;
 
 function escapeHtml(text) {
     const map = {
@@ -554,6 +555,119 @@ async function setTypingStatus(typing) {
     });
 }
 
+// ── TYPING INDICATOR ─────────────────────────────────────────
+// Elemen "nama • • •" ini BUKAN message — tidak pernah disimpan/dibaca
+// dari tabel messages. Elemen cuma ada di DOM pas ada yang lagi ngetik,
+// dan beneran DILEPAS dari DOM (bukan cuma disembunyiin) begitu fade-out
+// kelar, biar ga ada state "ada di layout tapi invisible" yang nyangkut.
+let typingIndicatorRemoveTimer = null;
+
+function buildTypingNameParts(typingUsers) {
+    if (typingUsers.length === 1) {
+        return [{
+            text: typingUsers[0].user_name || "Seseorang",
+            colored: true
+        }];
+    }
+    if (typingUsers.length === 2) {
+        return [{
+            text: typingUsers[0].user_name || "Seseorang",
+            colored: true
+        }, {
+            text: ", ",
+            colored: false
+        }, {
+            text: typingUsers[1].user_name || "Seseorang",
+            colored: true
+        }];
+    }
+    const rest = typingUsers.length - 1;
+    return [{
+        text: typingUsers[0].user_name || "Seseorang",
+        colored: true
+    }, {
+        text: ` dan ${rest} lainnya`,
+        colored: false
+    }];
+}
+
+function createTypingIndicatorRow() {
+    const row = document.createElement("div");
+    row.className = "typing-indicator-row";
+    row.id = "typingIndicatorRow";
+    row.setAttribute("aria-live", "polite");
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "typing-indicator-name";
+
+    const dotsEl = document.createElement("span");
+    dotsEl.className = "typing-dots";
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("span");
+        dot.textContent = "•";
+        dotsEl.appendChild(dot);
+    }
+
+    row.appendChild(nameEl);
+    row.appendChild(dotsEl);
+    return row;
+}
+
+function renderTypingIndicator(typingUsers) {
+    const messagesContainer = document.getElementById("messages");
+    if (!messagesContainer) return;
+
+    // Ga ada yang ngetik → fade-out lalu beneran dicabut dari DOM.
+    if (!typingUsers || typingUsers.length === 0) {
+        if (!typingIndicatorEl) return;
+        const row = typingIndicatorEl;
+        row.classList.remove("visible");
+        clearTimeout(typingIndicatorRemoveTimer);
+        typingIndicatorRemoveTimer = setTimeout(() => {
+            if (row.parentNode) row.parentNode.removeChild(row);
+        }, 210);
+        typingIndicatorEl = null;
+        return;
+    }
+
+    clearTimeout(typingIndicatorRemoveTimer);
+    const isNewElement = !typingIndicatorEl;
+    if (isNewElement) {
+        typingIndicatorEl = createTypingIndicatorRow();
+    }
+    const row = typingIndicatorEl;
+
+    const nameEl = row.querySelector(".typing-indicator-name");
+    nameEl.innerHTML = "";
+    buildTypingNameParts(typingUsers).forEach((part) => {
+        const span = document.createElement("span");
+        span.textContent = part.text;
+        if (part.colored) {
+            span.style.color = stringToColor(part.text);
+        }
+        nameEl.appendChild(span);
+    });
+
+    // Selalu jadi child paling akhir, biar posisinya di bawah message terakhir.
+    messagesContainer.appendChild(row);
+
+    if (isNewElement) {
+        // Paksa reflow dulu sebelum nambah class "visible", biar browser
+        // benar-benar "ngeliat" state awal (opacity:0) dan transisi fade-in
+        // pasti kepicu — bukan langsung snap ke state akhir.
+        void row.offsetHeight;
+    }
+    row.classList.add("visible");
+
+    // Cuma auto-scroll kalau user memang lagi di posisi paling bawah;
+    // kalau lagi scroll baca chat lama, posisi dibiarkan apa adanya.
+    if (isUserAtBottom) {
+        setTimeout(() => {
+            scrollToBottom();
+        }, 100);
+    }
+}
+
 function renderMessage(messageData) {
     const messageId = messageData.id;
     if (messageElements[messageId]) {
@@ -632,6 +746,10 @@ function renderMessage(messageData) {
     }</div></div>`;
     document.getElementById("messages").appendChild(messageElement);
     messageElements[messageId] = messageElement;
+    if (typingIndicatorEl) {
+        // appendChild pada node yang udah ada di DOM = pindahin ke posisi akhir.
+        document.getElementById("messages").appendChild(typingIndicatorEl);
+    }
     if (isUserAtBottom) {
         setTimeout(() => {
             scrollToBottom();
@@ -707,10 +825,12 @@ async function initChatSession(user) {
                 data
             } = await supabaseClient.from("typing_status").select("*").eq("typing", true);
             const typingUsers = (data || [])
-                .filter((t) => t.user_name !== currentProfile.display_name)
-                .map((t) => t.user_name);
-            const typingStatus = document.getElementById("typingStatus");
-            typingStatus.innerHTML = typingUsers.length > 0 ? `<div style="padding:5px 15px;font-size:0.8rem;color:var(--text-muted)">${typingUsers.join(", ")} sedang mengetik...</div>` : "";
+                .filter((t) => t.user_id !== currentUser.id)
+                .map((t) => ({
+                    user_id: t.user_id,
+                    user_name: t.user_name
+                }));
+            renderTypingIndicator(typingUsers);
         })
         .subscribe();
 
@@ -753,6 +873,8 @@ function endChatSession() {
     lastMessageDate = null;
     lastRenderedUserId = null;
     lastRenderedTimestamp = null;
+    typingIndicatorEl = null; // innerHTML="" di atas udah lepas node lama dari DOM
+    clearTimeout(typingIndicatorRemoveTimer);
     cleanupObjectUrls();
     if (messagesChannel) {
         supabaseClient.removeChannel(messagesChannel);
@@ -804,7 +926,7 @@ document.addEventListener("DOMContentLoaded", function() {
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
             setTypingStatus(false);
-        }, 3000);
+        }, 1500);
     });
     messageInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
