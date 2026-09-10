@@ -8,6 +8,7 @@ const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const loginProviderEl = document.getElementById("settingsLoginProvider");
+const loginIconEl = document.getElementById("settingsLoginIcon");
 const passwordSection = document.getElementById("passwordSection");
 const newPasswordInput = document.getElementById("newPasswordInput");
 const confirmPasswordInput = document.getElementById("confirmPasswordInput");
@@ -52,11 +53,14 @@ savePasswordBtn.addEventListener("click", async () => {
 
 function applyProviderInfo(user) {
     const provider = user.app_metadata?.provider || "email";
+    const email = user.email || "";
     if (provider === "google") {
-        loginProviderEl.textContent = `Google (${user.email || ""})`;
+        loginProviderEl.textContent = email ? `Google · ${email}` : "Google";
+        loginIconEl.innerHTML = '<i class="fa-brands fa-google"></i>';
         passwordSection.style.display = "none";
     } else {
-        loginProviderEl.textContent = `Email & Password (${user.email || ""})`;
+        loginProviderEl.textContent = email ? `Email & Password · ${email}` : "Email & Password";
+        loginIconEl.innerHTML = '<i class="fas fa-envelope"></i>';
         passwordSection.style.display = "block";
     }
 }
