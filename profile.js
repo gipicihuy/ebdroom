@@ -21,6 +21,12 @@ const guestOverlay = document.getElementById("profileGuestOverlay");
 let currentUser = null;
 let currentProfile = null;
 let selectedAvatarFile = null;
+let originalName = "";
+
+function refreshSaveState() {
+    const nameChanged = nameInput.value.trim() !== originalName;
+    saveBtn.disabled = !currentUser || (!nameChanged && !selectedAvatarFile) || nameInput.value.trim().length === 0;
+}
 
 function setStatus(message, type) {
     statusEl.textContent = message || "";
@@ -31,7 +37,10 @@ function setStatus(message, type) {
 function updateNameCharCount() {
     nameCharCount.textContent = `${nameInput.value.length}/20`;
 }
-nameInput.addEventListener("input", updateNameCharCount);
+nameInput.addEventListener("input", () => {
+    updateNameCharCount();
+    refreshSaveState();
+});
 
 avatarWrap.addEventListener("click", () => avatarInput.click());
 avatarChangeBtn.addEventListener("click", () => avatarInput.click());
@@ -54,6 +63,7 @@ avatarInput.addEventListener("change", (event) => {
     };
     reader.readAsDataURL(file);
     setStatus("", null);
+    refreshSaveState();
 });
 
 async function loadProfile(userId) {
@@ -104,22 +114,26 @@ saveBtn.addEventListener("click", async () => {
         currentProfile.display_name = newName;
         currentProfile.avatar_url = avatarUrl;
         selectedAvatarFile = null;
+        originalName = newName;
         setStatus("Profil berhasil diperbarui.", "success");
     } catch (error) {
         console.error("Error updating profile:", error);
         setStatus("Gagal menyimpan: " + error.message, "error");
     } finally {
-        saveBtn.disabled = false;
+        refreshSaveState();
     }
 });
 
 async function initProfilePage(user) {
     currentUser = user;
     currentProfile = await loadProfile(user.id);
-    nameInput.value = currentProfile.display_name || "";
+    originalName = currentProfile.display_name || "";
+    selectedAvatarFile = null;
+    nameInput.value = originalName;
     avatarPreview.src = currentProfile.avatar_url || "default-avatar.jpg";
     emailField.value = user.email || "";
     updateNameCharCount();
+    refreshSaveState();
     guestOverlay.style.display = "none";
 }
 

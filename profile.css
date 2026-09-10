@@ -3,8 +3,12 @@
 .profile-back-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--text-primary); background: var(--bg-secondary); border: 1px solid var(--border-color); text-decoration: none; transition: var(--transition); }
 .profile-back-btn:hover { background: var(--bg-tertiary); border-color: var(--border-hover); }
 .profile-topbar-title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
-.profile-main { flex: 1; display: flex; justify-content: center; padding: 32px 16px 60px; }
-.profile-card { width: 100%; max-width: 420px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 28px 24px; }
+.profile-main { flex: 1; display: flex; justify-content: center; padding: 24px 16px 60px; }
+.profile-card { width: 100%; max-width: 480px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 28px 24px; }
+@media (max-width: 480px) {
+    .profile-main { padding: 16px 12px 48px; }
+    .profile-card { border-radius: var(--border-radius-sm); padding: 24px 16px; }
+}
 .profile-avatar-section { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 28px; }
 .profile-avatar-wrap { position: relative; width: 96px; height: 96px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 2px solid var(--border-color); }
 .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -19,11 +23,14 @@
 .profile-field input:disabled { color: var(--text-secondary); opacity: 0.7; }
 .profile-field .char-count { position: absolute; right: 10px; bottom: -18px; font-size: 0.75rem; color: var(--text-muted); }
 .profile-actions { display: flex; gap: 10px; margin-top: 30px; }
-.profile-cancel-btn, .profile-save-btn { flex: 1; text-align: center; padding: 11px 16px; border-radius: var(--border-radius-sm); font-size: 0.92rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; }
+.profile-cancel-btn, .profile-save-btn { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; padding: 12px 14px; border-radius: var(--border-radius-sm); font-size: 0.92rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; }
 .profile-cancel-btn { background: var(--bg-tertiary); color: var(--text-primary); }
 .profile-save-btn { background: var(--accent-primary); color: #fff; }
-.profile-save-btn:hover { background: var(--accent-secondary); }
-.profile-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.profile-save-btn:hover:not(:disabled) { background: var(--accent-secondary); }
+.profile-save-btn:disabled { background: var(--bg-tertiary); color: var(--text-secondary); opacity: 0.7; cursor: not-allowed; }
+@media (max-width: 360px) {
+    .profile-actions { flex-direction: column-reverse; }
+}
 .profile-status { text-align: center; margin: 16px 0 0; font-size: 0.85rem; min-height: 18px; color: var(--text-secondary); }
 .profile-status.error { color: var(--danger); }
 .profile-status.success { color: #4ade80; }
