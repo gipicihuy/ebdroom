@@ -19,38 +19,32 @@
                 <i class="fas fa-arrow-left"></i>
             </a>
             <span class="profile-topbar-title">Edit Profil</span>
+            <button type="button" class="profile-save-link" id="profileSaveBtn" disabled>Simpan</button>
         </header>
 
         <main class="profile-main">
-            <div class="profile-card">
-                <div class="profile-avatar-section">
-                    <div class="profile-avatar-wrap" id="profileAvatarWrap">
-                        <img id="profileAvatarPreview" src="default-avatar.jpg" alt="Avatar">
-                        <div class="profile-avatar-overlay">
-                            <i class="fas fa-camera"></i>
-                        </div>
+            <div class="profile-avatar-section">
+                <div class="profile-avatar-wrap" id="profileAvatarWrap">
+                    <img id="profileAvatarPreview" src="" alt="Avatar" style="display:none">
+                    <div class="profile-avatar-letter" id="profileAvatarLetter">?</div>
+                    <div class="profile-avatar-badge">
+                        <i class="fas fa-camera"></i>
                     </div>
-                    <input type="file" id="profileAvatarInput" accept="image/*" style="display:none">
-                    <button type="button" class="profile-avatar-change-btn" id="profileAvatarChangeBtn">Ganti Foto</button>
                 </div>
+            </div>
+            <input type="file" id="profileAvatarInput" accept="image/*" style="display:none">
 
-                <div class="profile-field">
+            <div class="profile-field-list">
+                <div class="profile-field-row">
                     <label for="profileNameInput">Nama Tampilan</label>
                     <input type="text" id="profileNameInput" maxlength="20" placeholder="Masukkan nama">
-                    <span class="char-count" id="profileNameCharCount">0/20</span>
                 </div>
-
-                <div class="profile-field">
+                <div class="profile-field-row">
                     <label>Email</label>
                     <input type="text" id="profileEmailField" disabled>
                 </div>
-
-                <div class="profile-actions">
-                    <a href="/" class="profile-cancel-btn">Batal</a>
-                    <button type="button" class="profile-save-btn" id="profileSaveBtn" disabled>Simpan Perubahan</button>
-                </div>
-                <p class="profile-status" id="profileStatus"></p>
             </div>
+            <p class="profile-status" id="profileStatus"></p>
         </main>
     </div>
 
@@ -58,7 +52,7 @@
         <div class="profile-guest-box">
             <h3>Login dulu ya</h3>
             <p>Kamu harus login untuk mengedit profil.</p>
-            <a href="/" class="profile-save-btn">Ke Halaman Chat</a>
+            <a href="/" class="profile-guest-btn">Ke Halaman Chat</a>
         </div>
     </div>
 

@@ -9,10 +9,9 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const avatarWrap = document.getElementById("profileAvatarWrap");
 const avatarPreview = document.getElementById("profileAvatarPreview");
+const avatarLetter = document.getElementById("profileAvatarLetter");
 const avatarInput = document.getElementById("profileAvatarInput");
-const avatarChangeBtn = document.getElementById("profileAvatarChangeBtn");
 const nameInput = document.getElementById("profileNameInput");
-const nameCharCount = document.getElementById("profileNameCharCount");
 const emailField = document.getElementById("profileEmailField");
 const saveBtn = document.getElementById("profileSaveBtn");
 const statusEl = document.getElementById("profileStatus");
@@ -22,6 +21,30 @@ let currentUser = null;
 let currentProfile = null;
 let selectedAvatarFile = null;
 let originalName = "";
+
+function stringToColor(str) {
+    if (!str) return "#c0392b";
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue},60%,42%)`;
+}
+
+function renderAvatar(url) {
+    if (url) {
+        avatarPreview.src = url;
+        avatarPreview.style.display = "block";
+        avatarLetter.style.display = "none";
+    } else {
+        const label = (nameInput.value.trim() || emailField.value || "?").trim();
+        avatarLetter.textContent = label.charAt(0).toUpperCase();
+        avatarLetter.style.background = stringToColor(label.toLowerCase());
+        avatarPreview.style.display = "none";
+        avatarLetter.style.display = "flex";
+    }
+}
 
 function refreshSaveState() {
     const nameChanged = nameInput.value.trim() !== originalName;
@@ -34,16 +57,12 @@ function setStatus(message, type) {
     if (type) statusEl.classList.add(type);
 }
 
-function updateNameCharCount() {
-    nameCharCount.textContent = `${nameInput.value.length}/20`;
-}
 nameInput.addEventListener("input", () => {
-    updateNameCharCount();
+    if (!selectedAvatarFile && !currentProfile?.avatar_url) renderAvatar("");
     refreshSaveState();
 });
 
 avatarWrap.addEventListener("click", () => avatarInput.click());
-avatarChangeBtn.addEventListener("click", () => avatarInput.click());
 
 avatarInput.addEventListener("change", (event) => {
     const file = event.target.files[0];
@@ -58,9 +77,7 @@ avatarInput.addEventListener("change", (event) => {
     }
     selectedAvatarFile = file;
     const reader = new FileReader();
-    reader.onload = (e) => {
-        avatarPreview.src = e.target.result;
-    };
+    reader.onload = (e) => renderAvatar(e.target.result);
     reader.readAsDataURL(file);
     setStatus("", null);
     refreshSaveState();
@@ -96,6 +113,8 @@ saveBtn.addEventListener("click", async () => {
         return;
     }
     saveBtn.disabled = true;
+    const originalLabel = saveBtn.textContent;
+    saveBtn.textContent = "...";
     setStatus("Menyimpan...", null);
     try {
         let avatarUrl = currentProfile?.avatar_url || "";
@@ -115,11 +134,13 @@ saveBtn.addEventListener("click", async () => {
         currentProfile.avatar_url = avatarUrl;
         selectedAvatarFile = null;
         originalName = newName;
+        renderAvatar(avatarUrl);
         setStatus("Profil berhasil diperbarui.", "success");
     } catch (error) {
         console.error("Error updating profile:", error);
         setStatus("Gagal menyimpan: " + error.message, "error");
     } finally {
+        saveBtn.textContent = originalLabel;
         refreshSaveState();
     }
 });
@@ -130,9 +151,8 @@ async function initProfilePage(user) {
     originalName = currentProfile.display_name || "";
     selectedAvatarFile = null;
     nameInput.value = originalName;
-    avatarPreview.src = currentProfile.avatar_url || "default-avatar.jpg";
     emailField.value = user.email || "";
-    updateNameCharCount();
+    renderAvatar(currentProfile.avatar_url || "");
     refreshSaveState();
     guestOverlay.style.display = "none";
 }
