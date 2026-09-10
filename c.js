@@ -833,16 +833,21 @@ document.addEventListener("DOMContentLoaded", function() {
     nameInput.addEventListener("input", updateNameCharCount);
 
     // ── Auth state ──
+    let initializedUserId = null;
     supabaseClient.auth.onAuthStateChange((_event, session) => {
         clearTimeout(typingTimeout);
         const user = session?.user || null;
         if (user) {
             currentUser = user;
-            initChatSession(user);
+            if (initializedUserId !== user.id) {
+                initializedUserId = user.id;
+                initChatSession(user);
+            }
             if (window.location.hash) {
                 window.history.replaceState(null, "", window.location.pathname + window.location.search);
             }
         } else {
+            initializedUserId = null;
             currentUser = null;
             currentProfile = null;
             endChatSession();
@@ -854,8 +859,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }) => {
         const user = session?.user || null;
-        if (user) {
+        if (user && initializedUserId !== user.id) {
             currentUser = user;
+            initializedUserId = user.id;
             initChatSession(user);
         }
     });
