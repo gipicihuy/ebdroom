@@ -7,5 +7,7 @@ wrangler.jsonc
 README.md
 supabase-schema.sql
 worker.js
+captcha.js
+webhook-verify.js
 .git
 .wrangler
