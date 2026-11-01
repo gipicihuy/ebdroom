@@ -33,6 +33,15 @@ const nameInput=document.getElementById("profileNameInput");
 const bioRow=document.getElementById("profileBioRow");
 const bioInput=document.getElementById("profileBioInput");
 const bioCount=document.getElementById("profileBioCount");
+
+const songTitleInput=document.getElementById("profileSongTitleInput");
+const songUrlInput=document.getElementById("profileSongUrlInput");
+const songFileInput=document.getElementById("profileSongFileInput");
+const btnUploadSong=document.getElementById("btnUploadSong");
+const btnDelSong=document.getElementById("btnDelSong");
+const audioPreviewWrap=document.getElementById("profileAudioPreview");
+const audioPlayer=document.getElementById("profileAudioPlayer");
+
 const emailField=document.getElementById("profileEmailField");
 const joinedField=document.getElementById("profileJoinedField");
 const saveBtn=document.getElementById("profileSaveBtn");
@@ -47,6 +56,12 @@ let selectedBannerFile=null;
 let currentBannerUrl="";
 let originalBannerUrl="";
 let originalBannerDim=60;
+
+let selectedSongFile=null;
+let currentSongUrl="";
+let originalSongUrl="";
+let originalSongTitle="";
+
 let originalName="";
 let originalBio="";
 let bioSupported=!1;
@@ -80,7 +95,6 @@ function renderBanner(url, dim){
   bannerDimInput.value = brightnessVal;
   bannerDimVal.textContent = brightnessVal + "%";
   
-  // Highlight chip yang cocok
   dimChips.forEach(chip => {
     chip.classList.toggle("active", Number(chip.dataset.val) === Number(brightnessVal));
   });
@@ -98,6 +112,18 @@ function renderBanner(url, dim){
     bannerFallback.style.display = "block";
     bannerDel.style.display = "none";
     bannerDimRow.style.display = "none";
+  }
+}
+
+function renderSong(url, title){
+  if(songTitleInput) songTitleInput.value = title || "";
+  if(songUrlInput) songUrlInput.value = (url && !url.startsWith("blob:")) ? url : "";
+  if(url && audioPlayer && audioPreviewWrap){
+    audioPlayer.src = toMediaUrl(url);
+    audioPreviewWrap.style.display = "flex";
+  }else if(audioPlayer && audioPreviewWrap){
+    audioPlayer.src = "";
+    audioPreviewWrap.style.display = "none";
   }
 }
 
@@ -158,10 +184,12 @@ function refreshSaveState(){
   const bannerChanged = currentBannerUrl !== originalBannerUrl || selectedBannerFile !== null;
   const dimChanged = currentBannerUrl && Number(bannerDimInput.value) !== Number(originalBannerDim);
   const avatarChanged = selectedAvatarFile !== null;
+  const songUrlChanged = currentSongUrl !== originalSongUrl || selectedSongFile !== null;
+  const songTitleChanged = (songTitleInput?.value || "").trim() !== originalSongTitle;
 
   bioCount.textContent = bioInput.value.length + "/150";
 
-  const isDirty = nameChanged || bioChanged || bannerChanged || dimChanged || avatarChanged;
+  const isDirty = nameChanged || bioChanged || bannerChanged || dimChanged || avatarChanged || songUrlChanged || songTitleChanged;
   saveBtn.disabled = !currentUser || !isDirty || nameInput.value.trim().length === 0 || !nameIsAvailable;
 }
 
@@ -208,11 +236,17 @@ async function initProfilePage(e){
   selectedBannerFile = null;
   selectedAvatarFile = null;
 
+  originalSongUrl = currentProfile.song_url || "";
+  currentSongUrl = originalSongUrl;
+  originalSongTitle = currentProfile.song_title || "";
+  selectedSongFile = null;
+
   emailField.value=e.email||"";
   joinedField.value=formatJoinedDate(e.created_at);
 
   renderAvatar(currentProfile.avatar_url||"");
   renderBanner(originalBannerUrl, originalBannerDim);
+  renderSong(originalSongUrl, originalSongTitle);
 
   refreshSaveState();
   guestOverlay.style.display="none";
@@ -280,6 +314,66 @@ dimChips.forEach(chip => {
   });
 });
 
+// Profile Song Interactions
+if (songUrlInput) {
+  songUrlInput.addEventListener("input", () => {
+    const url = songUrlInput.value.trim();
+    selectedSongFile = null;
+    currentSongUrl = url;
+    if (url && audioPlayer && audioPreviewWrap) {
+      audioPlayer.src = toMediaUrl(url);
+      audioPreviewWrap.style.display = "flex";
+    } else if (audioPlayer && audioPreviewWrap) {
+      audioPlayer.src = "";
+      audioPreviewWrap.style.display = "none";
+    }
+    refreshSaveState();
+  });
+}
+
+if (songTitleInput) {
+  songTitleInput.addEventListener("input", refreshSaveState);
+}
+
+if (btnUploadSong && songFileInput) {
+  btnUploadSong.addEventListener("click", () => songFileInput.click());
+  songFileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/") && !/\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(file.name)) {
+      return void setStatus("Hanya file audio (MP3, WAV, M4A, OGG) yang diizinkan!", "error");
+    }
+    if (file.size > 26214400) {
+      return void setStatus("Ukuran audio maksimal 25MB!", "error");
+    }
+    selectedSongFile = file;
+    currentSongUrl = "blob:" + file.name;
+    if (audioPlayer && audioPreviewWrap) {
+      audioPlayer.src = URL.createObjectURL(file);
+      audioPreviewWrap.style.display = "flex";
+    }
+    if (songTitleInput && !songTitleInput.value.trim()) {
+      songTitleInput.value = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+    }
+    setStatus("", null);
+    refreshSaveState();
+  });
+}
+
+if (btnDelSong) {
+  btnDelSong.addEventListener("click", () => {
+    selectedSongFile = null;
+    currentSongUrl = "";
+    if (songTitleInput) songTitleInput.value = "";
+    if (songUrlInput) songUrlInput.value = "";
+    if (audioPlayer && audioPreviewWrap) {
+      audioPlayer.src = "";
+      audioPreviewWrap.style.display = "none";
+    }
+    refreshSaveState();
+  });
+}
+
 // Avatar & text interactions
 nameInput.addEventListener("input",()=>{
   selectedAvatarFile||currentProfile?.avatar_url||renderAvatar("");
@@ -327,23 +421,33 @@ saveBtn.addEventListener("click",async()=>{
       bannerUrl = await uploadFile(selectedBannerFile);
     }
 
+    let songUrl = currentSongUrl;
+    if(selectedSongFile){
+      songUrl = await uploadFile(selectedSongFile);
+    }
+
     const bannerDim = Number(bannerDimInput.value) || 60;
+    const songTitle = (songTitleInput?.value || "").trim();
     const r=bioInput.value.trim();
 
     const updateData = {
       display_name: e,
       avatar_url: avatarUrl,
       banner_url: bannerUrl || null,
-      banner_dim: bannerDim
+      banner_dim: bannerDim,
+      song_url: songUrl || null,
+      song_title: songTitle || null
     };
     if(bioSupported) updateData.bio = r || null;
 
     let { error: i } = await supabaseClient.from("profiles").update(updateData).eq("id",currentUser.id);
 
-    // Fallback jika column banner belum ditambahkan di database
-    if(i && (i.message?.includes("banner") || i.code === "PGRST204" || i.code === "42703")){
+    // Fallback jika column banner/song belum ditambahkan di database
+    if(i && (i.message?.includes("banner") || i.message?.includes("song") || i.code === "PGRST204" || i.code === "42703")){
       delete updateData.banner_url;
       delete updateData.banner_dim;
+      delete updateData.song_url;
+      delete updateData.song_title;
       const res = await supabaseClient.from("profiles").update(updateData).eq("id",currentUser.id);
       i = res.error;
     }
@@ -354,6 +458,8 @@ saveBtn.addEventListener("click",async()=>{
     currentProfile.avatar_url = avatarUrl;
     currentProfile.banner_url = bannerUrl;
     currentProfile.banner_dim = bannerDim;
+    currentProfile.song_url = songUrl;
+    currentProfile.song_title = songTitle;
     currentProfile.bio = r;
 
     originalName = e;
@@ -361,11 +467,17 @@ saveBtn.addEventListener("click",async()=>{
     originalBannerUrl = bannerUrl;
     currentBannerUrl = bannerUrl;
     originalBannerDim = bannerDim;
+    originalSongUrl = songUrl;
+    currentSongUrl = songUrl;
+    originalSongTitle = songTitle;
+
     selectedAvatarFile = null;
     selectedBannerFile = null;
+    selectedSongFile = null;
 
     renderAvatar(avatarUrl);
     renderBanner(bannerUrl, bannerDim);
+    renderSong(songUrl, songTitle);
 
     await supabaseClient.from("messages").update({user_name:e,photo_url:avatarUrl}).eq("user_id",currentUser.id);
     setStatus("Profil berhasil diperbarui.","success");

@@ -74,6 +74,29 @@
           <textarea id="profileBioInput" maxlength="150" rows="3" placeholder="Ceritain dikit soal kamu"></textarea>
         </div>
 
+        <!-- Lagu Favorit Profil -->
+        <div class="profile-field-row" id="profileSongRow">
+          <label>
+            <span><i class="fas fa-compact-disc"></i> Lagu Favorit Profil</span>
+            <span class="profile-song-tag" id="profileSongTag">Widget Audio</span>
+          </label>
+          <input id="profileSongTitleInput" maxlength="40" placeholder="Judul lagu / nama artis (contoh: Nadin - Rayuan Perempuan Gila)">
+          <div class="profile-song-inputs">
+            <input id="profileSongUrlInput" type="url" placeholder="Paste link audio (https://cdn.zass.in/...)">
+            <button type="button" class="btn-upload-song" id="btnUploadSong" title="Upload audio dari HP/PC">
+              <i class="fas fa-file-audio"></i> Upload Audio
+            </button>
+            <input type="file" id="profileSongFileInput" accept="audio/*" style="display:none">
+          </div>
+          <div class="profile-audio-preview" id="profileAudioPreview" style="display:none;">
+            <audio id="profileAudioPlayer" controls preload="none"></audio>
+            <button type="button" class="btn-del-song" id="btnDelSong" title="Hapus lagu profil">
+              <i class="fas fa-trash"></i> Hapus
+            </button>
+          </div>
+          <small class="profile-field-hint">Lagu ini akan diputar lewat badge interaktif di pojok kanan atas kartu profilmu saat dilihat orang lain.</small>
+        </div>
+
         <div class="profile-field-row">
           <label>Email</label>
           <input id="profileEmailField" disabled="disabled">
