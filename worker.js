@@ -442,80 +442,142 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
       transition: all 0.25s ease;
     }
 
-    /* VIP List */
+    /* VIP List - Compact, Professional, Responsive */
     ul.vip-list {
       list-style: none;
       margin: 0;
       padding: 0;
       display: grid;
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+      gap: 10px;
     }
     .vip-item {
       display: flex;
-      gap: 14px;
+      gap: 10px;
       align-items: center;
       justify-content: space-between;
-      padding: 16px;
+      padding: 10px 12px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      transition: all 0.25s ease;
+      border-radius: 12px;
+      transition: all 0.2s ease;
       position: relative;
       overflow: hidden;
+      min-width: 0;
+    }
+    .vip-item:hover {
+      border-color: rgba(219, 115, 84, 0.45);
+      background: var(--surface-2);
     }
     .vip-avatar-mini {
-      width: 44px;
-      height: 44px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
-      background: #29221d;
+      background: #251e1b;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
+      font-size: 0.85rem;
       color: var(--accent);
       flex-shrink: 0;
       border: 1px solid var(--border);
-      transition: all 0.25s;
+      transition: all 0.2s;
     }
-    .vip-info { min-width: 0; flex: 1; display: grid; gap: 4px; }
+    .vip-info {
+      min-width: 0;
+      flex: 1;
+      display: grid;
+      gap: 2px;
+      line-height: 1.25;
+    }
     .vip-name-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
-    .vip-name { font-size: 1rem; color: #fff; }
-    .vip-sub { display: flex; align-items: center; gap: 6px; }
-    code.vip-id { font-size: 0.75rem; color: var(--text-muted); overflow-wrap: anywhere; }
+    .vip-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+    .vip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #f3c887, #e98f72);
+      color: #2b1a05;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+      flex-shrink: 0;
+    }
+    .vip-sub {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    code.vip-id {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
     .btn-copy-id {
       background: transparent;
       border: 0;
       color: var(--text-muted);
       cursor: pointer;
       padding: 2px 4px;
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
     }
     .btn-copy-id:hover { color: var(--accent); }
-    .vip-actions { display: flex; gap: 8px; align-items: center; }
+    .vip-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+    }
     .btn-edit {
-      background: var(--surface-2);
+      background: #25201d;
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 7px 12px;
-      font-size: 0.8rem;
+      padding: 6px 10px;
+      font-size: 0.74rem;
       font-weight: 700;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
     }
     .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
     .btn-del {
-      background: #311518;
+      background: #2b1215;
       color: #ff9a9a;
-      border: 1px solid #4a1f24;
+      border: 1px solid #451b20;
       border-radius: 8px;
-      padding: 7px 12px;
+      padding: 6px 9px;
+      font-size: 0.74rem;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.15s;
     }
-    .btn-del:hover { background: #4a1f24; }
+    .btn-del:hover { background: #451b20; }
   </style>
 </head>
 <body>
