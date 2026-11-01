@@ -129,12 +129,16 @@ create policy "Authenticated upload chat-avatars"
 -- Bio profil (maks 150 karakter). Aman dijalanin ulang.
 alter table public.profiles add column if not exists bio text check (char_length(bio) <= 150);
 
--- VIP / title spesial per user ID. Aman dijalanin ulang.
+-- VIP / title spesial & custom card per user ID. Aman dijalanin ulang.
 create table if not exists public.vip_users (
   user_id uuid primary key,
-  title text not null default 'ADMIN' check (char_length(title) between 1 and 16),
+  title text not null default 'ADMIN',
+  card_style text,
   created_at timestamptz default now()
 );
+alter table public.vip_users add column if not exists card_style text;
+alter table public.vip_users drop constraint if exists vip_users_title_check;
+alter table public.vip_users add constraint vip_users_title_check check (char_length(title) between 1 and 32);
 alter table public.vip_users enable row level security;
 drop policy if exists "VIP viewable by everyone" on public.vip_users;
 create policy "VIP viewable by everyone" on public.vip_users for select using (true);
@@ -146,7 +150,13 @@ revoke all on public.app_secrets from anon, authenticated;
 insert into public.app_secrets (name, value) values ('vip_key', 'GANTI_KEY_RAHASIA')
   on conflict (name) do update set value = excluded.value;
 
-create or replace function public.vip_manage(p_key text, p_action text, p_user uuid default null, p_title text default 'ADMIN')
+create or replace function public.vip_manage(
+  p_key text,
+  p_action text,
+  p_user uuid default null,
+  p_title text default 'ADMIN',
+  p_style text default null
+)
 returns jsonb
 language plpgsql
 security definer
@@ -158,18 +168,42 @@ begin
   end if;
   if p_action = 'add' then
     if p_user is null then raise exception 'user id kosong' using errcode = '22023'; end if;
-    insert into vip_users (user_id, title) values (p_user, upper(coalesce(nullif(trim(p_title), ''), 'ADMIN')))
-      on conflict (user_id) do update set title = excluded.title;
+    insert into vip_users (user_id, title, card_style)
+    values (
+      p_user,
+      upper(coalesce(nullif(trim(p_title), ''), 'ADMIN')),
+      nullif(trim(p_style), '')
+    )
+    on conflict (user_id) do update set
+      title = excluded.title,
+      card_style = excluded.card_style;
   elsif p_action = 'remove' then
     delete from vip_users where user_id = p_user;
   elsif p_action <> 'list' then
     raise exception 'aksi gak dikenal' using errcode = '22023';
   end if;
   return (
-    select coalesce(jsonb_agg(jsonb_build_object('id', v.user_id, 'title', v.title, 'name', p.display_name) order by v.created_at), '[]'::jsonb)
+    select coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'id', v.user_id,
+          'title', v.title,
+          'style', coalesce(v.card_style, ''),
+          'name', p.display_name
+        ) order by v.created_at
+      ),
+      '[]'::jsonb
+    )
     from vip_users v left join profiles p on p.id = v.user_id
   );
 end;
+$$;
+revoke all on function public.vip_manage(text, text, uuid, text, text) from public;
+grant execute on function public.vip_manage(text, text, uuid, text, text) to anon, authenticated;
+-- Kompatibilitas fungsi signature lama (4 argumen)
+create or replace function public.vip_manage(p_key text, p_action text, p_user uuid, p_title text)
+returns jsonb language sql security definer as $$
+  select public.vip_manage(p_key, p_action, p_user, p_title, null::text);
 $$;
 revoke all on function public.vip_manage(text, text, uuid, text) from public;
 grant execute on function public.vip_manage(text, text, uuid, text) to anon, authenticated;
