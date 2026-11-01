@@ -1,1 +1,103 @@
-<!doctype html><html lang="id"><head><meta charset="UTF-8"><meta name="theme-color" content="#1e1b19"><meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content"><title>Profil - Eberardos Room Chat</title><link rel="icon" href="https://i.ibb.co/xcqmzxt/20250818-192240.jpg" type="image/jpeg"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="profile.css"></head><body><div class="profile-page"><header class="profile-topbar"><a href="/" class="profile-back-btn" aria-label="Kembali"><i class="fas fa-arrow-left"></i> </a><span class="profile-topbar-title">Edit Profil</span> <button type="button" class="profile-save-link" id="profileSaveBtn" disabled="disabled">Simpan</button></header><main class="profile-main"><div class="profile-avatar-section"><div class="profile-avatar-wrap" id="profileAvatarWrap"><img id="profileAvatarPreview" src="" alt="Avatar" style="display:none"><div class="profile-avatar-letter" id="profileAvatarLetter">?</div><div class="profile-avatar-badge"><i class="fas fa-camera"></i></div></div></div><input type="file" id="profileAvatarInput" accept="image/*" style="display:none"><div class="profile-field-list"><div class="profile-field-row"><label for="profileNameInput">Nama Tampilan</label> <input id="profileNameInput" maxlength="20" placeholder="Masukkan nama"></div><div class="profile-field-row" id="profileBioRow" hidden><label for="profileBioInput">Bio <span class="profile-bio-count" id="profileBioCount">0/150</span></label> <textarea id="profileBioInput" maxlength="150" rows="3" placeholder="Ceritain dikit soal kamu"></textarea></div><div class="profile-field-row"><label>Email</label> <input id="profileEmailField" disabled="disabled"></div><div class="profile-field-row"><label>Bergabung Sejak</label> <input id="profileJoinedField" disabled="disabled"></div></div><p class="profile-status" id="profileStatus"></p></main></div><div id="profileGuestOverlay" class="profile-guest-overlay" style="display:none"><div class="profile-guest-box"><h3>Login dulu ya</h3><p>Kamu harus login untuk mengedit profil.</p><a href="/" class="profile-guest-btn">Ke Halaman Chat</a></div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="env-config.js"></script><script src="profile.js"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#1e1b19">
+  <meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
+  <title>Profil - Eberardos Room Chat</title>
+  <link rel="icon" href="https://i.ibb.co/xcqmzxt/20250818-192240.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="profile.css">
+</head>
+<body>
+  <div class="profile-page">
+    <header class="profile-topbar">
+      <a href="/" class="profile-back-btn" aria-label="Kembali"><i class="fas fa-arrow-left"></i></a>
+      <span class="profile-topbar-title">Edit Profil</span>
+      <button type="button" class="profile-save-link" id="profileSaveBtn" disabled="disabled">Simpan</button>
+    </header>
+
+    <main class="profile-main">
+      <!-- Banner Background Section -->
+      <div class="profile-banner-wrap" id="profileBannerWrap" title="Klik untuk ganti background banner">
+        <img id="profileBannerPreview" src="" alt="Banner" class="profile-banner-img" style="display:none">
+        <div class="profile-banner-fallback" id="profileBannerFallback"></div>
+        <div class="profile-banner-scrim"></div>
+        <div class="profile-banner-badge" id="profileBannerBadge"><i class="fas fa-image"></i> Ganti Banner</div>
+        <button type="button" class="profile-banner-del" id="profileBannerDel" title="Hapus banner" style="display:none">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+      <input type="file" id="profileBannerInput" accept="image/*" style="display:none">
+
+      <!-- Avatar Section (Overlapping Banner) -->
+      <div class="profile-avatar-section">
+        <div class="profile-avatar-wrap" id="profileAvatarWrap" title="Klik untuk ganti foto avatar">
+          <img id="profileAvatarPreview" src="" alt="Avatar" style="display:none">
+          <div class="profile-avatar-letter" id="profileAvatarLetter">?</div>
+          <div class="profile-avatar-badge"><i class="fas fa-camera"></i></div>
+        </div>
+      </div>
+      <input type="file" id="profileAvatarInput" accept="image/*" style="display:none">
+
+      <!-- Field List -->
+      <div class="profile-field-list">
+        <!-- Brightness Normalizer Controller (Aktif saat ada banner) -->
+        <div class="profile-field-row" id="profileBannerDimRow" style="display:none;">
+          <label for="profileBannerDim">
+            <span><i class="fas fa-circle-half-stroke"></i> Kecerahan Banner</span>
+            <span class="profile-dim-val" id="profileBannerDimVal">60%</span>
+          </label>
+          <div class="profile-dim-controls">
+            <input type="range" id="profileBannerDim" min="20" max="95" step="5" value="60">
+            <div class="profile-dim-presets">
+              <button type="button" class="dim-chip" data-val="40">Muted (40%)</button>
+              <button type="button" class="dim-chip active" data-val="60">Pas (60%)</button>
+              <button type="button" class="dim-chip" data-val="80">Terang (80%)</button>
+            </div>
+          </div>
+          <small class="profile-field-hint">Auto-Dim Normalizer: Menjaga gambar banner agar tidak menyilaukan dan teks/avatar tetap terbaca jelas.</small>
+        </div>
+
+        <div class="profile-field-row">
+          <label for="profileNameInput">Nama Tampilan</label>
+          <input id="profileNameInput" maxlength="20" placeholder="Masukkan nama">
+        </div>
+
+        <div class="profile-field-row" id="profileBioRow" hidden>
+          <label for="profileBioInput">Bio <span class="profile-bio-count" id="profileBioCount">0/150</span></label>
+          <textarea id="profileBioInput" maxlength="150" rows="3" placeholder="Ceritain dikit soal kamu"></textarea>
+        </div>
+
+        <div class="profile-field-row">
+          <label>Email</label>
+          <input id="profileEmailField" disabled="disabled">
+        </div>
+
+        <div class="profile-field-row">
+          <label>Bergabung Sejak</label>
+          <input id="profileJoinedField" disabled="disabled">
+        </div>
+      </div>
+
+      <p class="profile-status" id="profileStatus"></p>
+    </main>
+  </div>
+
+  <div id="profileGuestOverlay" class="profile-guest-overlay" style="display:none">
+    <div class="profile-guest-box">
+      <h3>Login dulu ya</h3>
+      <p>Kamu harus login untuk mengedit profil.</p>
+      <a href="/" class="profile-guest-btn">Ke Halaman Chat</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="env-config.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>

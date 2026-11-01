@@ -126,8 +126,10 @@ create policy "Authenticated upload chat-avatars"
   on storage.objects for insert
   with check (bucket_id = 'chat-avatars' and auth.role() = 'authenticated');
 
--- Bio profil (maks 150 karakter). Aman dijalanin ulang.
+-- Bio profil (maks 150 karakter) & banner background. Aman dijalanin ulang.
 alter table public.profiles add column if not exists bio text check (char_length(bio) <= 150);
+alter table public.profiles add column if not exists banner_url text;
+alter table public.profiles add column if not exists banner_dim integer default 60;
 
 -- VIP / title spesial & custom card per user ID. Aman dijalanin ulang.
 create table if not exists public.vip_users (
