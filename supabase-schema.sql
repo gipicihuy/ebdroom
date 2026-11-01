@@ -125,3 +125,6 @@ create policy "Public read chat-avatars"
 create policy "Authenticated upload chat-avatars"
   on storage.objects for insert
   with check (bucket_id = 'chat-avatars' and auth.role() = 'authenticated');
+
+-- Bio profil (maks 150 karakter). Aman dijalanin ulang.
+alter table public.profiles add column if not exists bio text check (char_length(bio) <= 150);
