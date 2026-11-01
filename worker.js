@@ -55,64 +55,76 @@ async function P(a,n){
 }
 
 function parseStyleConfig(raw) {
-  if (!raw) return { badgeStyle: "", cardStyle: "", nameColor: "", icon: "fa-shield-halved" };
+  if (!raw) return { badgeStyle: "", cardStyle: "", avatarStyle: "", nameStyle: "", icon: "fa-shield-halved" };
   try {
     const j = JSON.parse(raw);
     return {
       badgeStyle: j.badgeStyle || "",
       cardStyle: j.cardStyle || "",
-      nameColor: j.nameColor || "",
+      avatarStyle: j.avatarStyle || "",
+      nameStyle: j.nameStyle || "",
       icon: j.icon || "fa-shield-halved"
     };
   } catch {
-    return { badgeStyle: raw, cardStyle: "", nameColor: "", icon: "fa-shield-halved" };
+    return { badgeStyle: raw, cardStyle: "", avatarStyle: "", nameStyle: "", icon: "fa-shield-halved" };
   }
 }
 
 function h(key, list, msg, isError) {
-  const defaultPrompt = `Buatkan custom card styling dan badge title untuk profil VIP Eberardos Room Chat.
-Format output WAJIB HANYA JSON murni valid (tanpa markdown, tanpa penjelasan tambahan) dengan struktur:
+  const strictAiPrompt = `Instruksi Mutlak: Anda adalah Game UI & CSS Designer profesional.
+Tugas: Buatkan styling bentukan kartu profil (card shape), bingkai avatar kustom, dan lencana VIP khusus untuk chat room.
+
+ATURAN OUTPUT (WAJIB PATUH):
+1. DILARANG memberi basa-basi ("Tentu", "Berikut adalah JSON", dsb).
+2. DILARANG memberi penjelasan atau markdown codeblock di luar JSON.
+3. Output HANYA boleh string JSON murni valid yang diawali '{' dan diakhiri '}'.
+
+Struktur JSON:
 {
   "title": "NAMA_TITLE",
-  "badgeStyle": "css inline untuk badge",
-  "cardStyle": "css inline untuk kartu profil",
-  "nameColor": "#hex_warna_nama",
-  "icon": "fa-crown"
+  "icon": "fa-bolt",
+  "cardStyle": "clip-path: polygon(...); background: ...; border: ...; box-shadow: ...;",
+  "avatarStyle": "clip-path: polygon(...) atau border-radius: ...; border: ...; filter: ...;",
+  "nameStyle": "color: ...; text-shadow: ...; font-weight: 800;",
+  "badgeStyle": "background: ...; color: ...; border-radius: ...; box-shadow: ...;"
 }
 
-Panduan CSS:
-- badgeStyle: styling pill kecil (contoh: "background: linear-gradient(135deg, #f3c887, #e98f72); color: #2b1a05; font-weight: 800; box-shadow: 0 0 10px rgba(243,200,135,0.4);")
-- cardStyle: styling container kartu profil (contoh: "background: linear-gradient(145deg, #241c19, #1a1614); border: 1px solid #db7354; box-shadow: 0 10px 30px rgba(219,115,84,0.25);")
-- nameColor: hex warna teks nama (contoh: "#f0ebe5" atau "#ffb088")
-- icon FontAwesome 6 pilihan: fa-crown, fa-shield-halved, fa-fire, fa-bolt, fa-gem, fa-star, fa-skull, fa-wand-magic-sparkles
+Panduan Bentukan Fisik:
+- cardStyle: Jangan cuma warna! Buat bentukan unik dengan 'clip-path' (misal: chamfered polygon sudut potong mecha 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)', rounded arch, asymmetrical borders, gradient outline, atau glassmorphism).
+- avatarStyle: Berikan bentukan avatar unik (misal: hexagon 'clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', diamond squircle, glowing outline filter, atau ring halo).
+- nameStyle: Warna teks nama mencolok, bisa gradient text (-webkit-background-clip: text), text-shadow neon aura.
+- badgeStyle: Pill title badge dengan gradient kontras dan glow.
+- icon: Pilih 1 nama icon FontAwesome 6 (fa-crown, fa-bolt, fa-fire, fa-gem, fa-star, fa-skull, fa-shield-halved, fa-wand-magic-sparkles, fa-dragon, fa-ghost, fa-biohazard, fa-crosshairs, fa-meteor).
 
-Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxury Gold / Crimson Blood / Cosmic Nebula]`;
+Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Royal Golden Emperor / Void Dark Matter / Blood Moon Vampire / Glitch Cyber Hacker / Cosmic Astral Prism]`;
 
   const items = (list || []).map((e) => {
-    const styleData = parseStyleConfig(e.style);
-    const badgeAttr = styleData.badgeStyle ? `style="${d(styleData.badgeStyle)}"` : "";
-    const cardAttr = styleData.cardStyle ? `style="${d(styleData.cardStyle)}"` : "";
-    const iconClass = d(styleData.icon || "fa-shield-halved");
+    const s = parseStyleConfig(e.style);
+    const badgeAttr = s.badgeStyle ? `style="${d(s.badgeStyle)}"` : "";
+    const cardAttr = s.cardStyle ? `style="${d(s.cardStyle)}"` : "";
+    const avatarAttr = s.avatarStyle ? `style="${d(s.avatarStyle)}"` : "";
+    const nameAttr = s.nameStyle ? `style="${d(s.nameStyle)}"` : "";
+    const iconClass = d(s.icon || "fa-shield-halved");
     const safeStyleJson = d(e.style || "");
 
     return `<li class="vip-item" ${cardAttr}>
+      <div class="vip-avatar-mini" ${avatarAttr}><i class="fas fa-user"></i></div>
       <div class="vip-info">
         <div class="vip-name-row">
-          <strong class="vip-name">${d(e.name || "(Tanpa profil)")}</strong>
+          <strong class="vip-name" ${nameAttr}>${d(e.name || "(Tanpa profil)")}</strong>
           <span class="vip-badge" ${badgeAttr}><i class="fas ${iconClass}"></i> ${d(e.title || "ADMIN")}</span>
         </div>
         <div class="vip-sub">
           <code class="vip-id">${d(e.id)}</code>
-          <button type="button" class="btn-copy-id" onclick="copyText('${d(e.id)}')"><i class="fas fa-copy"></i></button>
+          <button type="button" class="btn-copy-id" title="Salin ID" onclick="copyText('${d(e.id)}')"><i class="fas fa-copy"></i></button>
         </div>
-        ${e.style ? `<div class="vip-style-preview"><code>${d(e.style.slice(0, 100))}${e.style.length > 100 ? "..." : ""}</code></div>` : ""}
       </div>
       <div class="vip-actions">
-        <button type="button" class="btn-edit" onclick="editVip('${d(e.id)}', '${d(e.title || "ADMIN")}', '${safeStyleJson}')">Edit</button>
+        <button type="button" class="btn-edit" onclick="editVip('${d(e.id)}', '${d(e.title || "ADMIN")}', '${safeStyleJson}')"><i class="fas fa-pen"></i> Edit</button>
         <form method="get" onsubmit="return confirm('Hapus VIP user ini?')">
           <input type="hidden" name="key" value="${d(key)}">
           <input type="hidden" name="remove" value="${d(e.id)}">
-          <button class="btn-del" type="submit"><i class="fas fa-trash"></i></button>
+          <button class="btn-del" type="submit" title="Hapus"><i class="fas fa-trash"></i></button>
         </form>
       </div>
     </li>`;
@@ -124,21 +136,21 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>VIP & Custom Card Manager — Eberardos</title>
+  <title>VIP & Custom Card Architect — Eberardos</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --bg: #181514;
-      --surface: #221d1b;
-      --surface-2: #2a2421;
+      --bg: #151312;
+      --surface: #1e1b19;
+      --surface-2: #27221f;
       --border: #38302c;
       --accent: #db7354;
-      --accent-hover: #e58264;
-      --accent-dim: rgba(219, 115, 84, 0.15);
+      --accent-hover: #ea8163;
+      --accent-dim: rgba(219, 115, 84, 0.16);
       --text: #f0ebe5;
       --text-muted: #ada59d;
-      --code-color: #f3c887;
-      --radius: 14px;
+      --gold: #f3c887;
+      --radius: 16px;
     }
     * { box-sizing: border-box; }
     body {
@@ -148,70 +160,96 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       color: var(--text);
       font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    main { max-width: 860px; margin: 0 auto; }
+    main { max-width: 900px; margin: 0 auto; }
+    
     header.hero {
       margin-bottom: 24px;
-      padding-bottom: 20px;
+      padding-bottom: 18px;
       border-bottom: 1px solid var(--border);
     }
     h1 {
-      font-size: 1.45rem;
+      font-size: 1.55rem;
       margin: 0 0 6px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       color: #fff;
+      font-weight: 800;
     }
     h1 i { color: var(--accent); }
     header p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
     
     .msg {
-      padding: 12px 16px;
+      padding: 12px 18px;
       border-radius: var(--radius);
-      margin-bottom: 20px;
-      font-weight: 500;
+      margin-bottom: 22px;
+      font-weight: 600;
     }
     .ok { background: rgba(80, 200, 120, 0.15); border: 1px solid rgba(80, 200, 120, 0.3); color: #8fe0a9; }
     .err { background: rgba(255, 90, 90, 0.15); border: 1px solid rgba(255, 90, 90, 0.3); color: #ff9a9a; }
 
-    /* Guide & AI Prompt Box */
-    .guide-card {
+    /* AI Prompt Architect Section */
+    .ai-guide-box {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px 20px;
+      padding: 20px 22px;
       margin-bottom: 24px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      position: relative;
     }
-    .guide-head {
+    .ai-guide-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 14px;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
-    .guide-title {
-      font-size: 1.05rem;
-      font-weight: 700;
+    .ai-guide-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gold);
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--code-color);
     }
-    .steps-list {
-      display: grid;
+    .btn-copy-ai {
+      background: var(--accent);
+      color: #240e06;
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
       gap: 8px;
-      margin-bottom: 14px;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 14px rgba(219, 115, 84, 0.3);
     }
-    .step-item {
+    .btn-copy-ai:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    .ai-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .step-card {
+      background: #151211;
+      border: 1px solid #2f2723;
+      border-radius: 12px;
+      padding: 12px 14px;
       display: flex;
       gap: 10px;
-      align-items: flex-start;
-      font-size: 0.88rem;
-      color: #dfd8d1;
+      font-size: 0.83rem;
+      color: #ddd4cb;
     }
-    .step-num {
+    .step-badge {
       background: var(--accent-dim);
       color: var(--accent);
       border: 1px solid var(--accent);
@@ -225,105 +263,92 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       font-weight: 800;
       flex-shrink: 0;
     }
-    .prompt-box {
-      position: relative;
-      background: #141110;
-      border: 1px solid #332b27;
+    .prompt-preview-wrap {
+      background: #110e0d;
+      border: 1px solid #2d2420;
       border-radius: 10px;
-      padding: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.8rem;
-      color: #cfc6be;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 160px;
+      padding: 12px 14px;
+      max-height: 140px;
       overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      color: #c9bfb6;
+      white-space: pre-wrap;
     }
-    .btn-copy-prompt {
-      background: var(--accent);
-      color: #2b1209;
-      border: 0;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.15s;
-    }
-    .btn-copy-prompt:hover { background: var(--accent-hover); }
 
-    /* Presets Quick Pick */
-    .presets-wrap {
+    /* Quick Presets Grid */
+    .presets-section {
       margin-bottom: 24px;
     }
-    .presets-label {
+    .presets-title {
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text-muted);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .presets-grid {
+    .presets-list {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
-    .preset-pill {
-      background: var(--surface-2);
+    .preset-card-btn {
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 0.82rem;
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
       color: var(--text);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
     }
-    .preset-pill:hover {
+    .preset-card-btn:hover {
       border-color: var(--accent);
-      transform: translateY(-1px);
+      background: var(--surface-2);
+      transform: translateY(-2px);
     }
 
-    /* Main Grid: Form + Live Preview */
-    .workspace-grid {
+    /* Workspace 2 Kolom */
+    .workspace {
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
       gap: 20px;
       margin-bottom: 30px;
     }
-    @media (max-width: 768px) {
-      .workspace-grid { grid-template-columns: 1fr; }
+    @media (max-width: 800px) {
+      .workspace { grid-template-columns: 1fr; }
     }
 
-    .form-panel {
+    .panel {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px 20px;
+      padding: 20px;
     }
-    .form-panel h2 {
-      font-size: 1.1rem;
+    .panel h2 {
+      font-size: 1.15rem;
       margin: 0 0 16px;
       display: flex;
       align-items: center;
       gap: 8px;
+      color: #fff;
     }
-    .field {
-      margin-bottom: 14px;
-    }
-    .field label {
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
       display: block;
       font-size: 0.82rem;
       font-weight: 700;
       color: var(--text-muted);
       margin-bottom: 6px;
-      letter-spacing: 0.03em;
     }
     input, textarea {
       width: 100%;
@@ -333,7 +358,7 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       background: #141110;
       color: inherit;
       font: inherit;
-      transition: border 0.15s;
+      transition: border-color 0.15s;
     }
     input:focus, textarea:focus {
       outline: 0;
@@ -341,17 +366,18 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
     }
     textarea {
       resize: vertical;
-      min-height: 90px;
+      min-height: 140px;
       font-family: ui-monospace, SFMono-Regular, monospace;
       font-size: 0.8rem;
+      line-height: 1.45;
     }
-    .submit-btn {
+    .btn-submit {
       width: 100%;
       padding: 12px;
       border: 0;
       border-radius: 10px;
       background: var(--accent);
-      color: #2b1209;
+      color: #240e06;
       font-size: 0.95rem;
       font-weight: 800;
       cursor: pointer;
@@ -359,74 +385,48 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: background 0.15s;
+      transition: all 0.15s;
     }
-    .submit-btn:hover { background: var(--accent-hover); }
+    .btn-submit:hover { background: var(--accent-hover); }
 
-    /* Live Preview */
-    .preview-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      display: flex;
-      flex-direction: column;
-    }
-    .preview-panel h2 {
-      font-size: 1.1rem;
-      margin: 0 0 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #f3c887;
-    }
-    .preview-card-wrap {
-      flex: 1;
+    /* Live Card Shape Preview Box */
+    .preview-box {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #151211;
-      border: 1px dashed var(--border);
-      border-radius: 12px;
+      min-height: 250px;
+      background: #141110;
+      border: 1px dashed #38302c;
+      border-radius: 14px;
       padding: 24px 16px;
-      text-align: center;
-      min-height: 200px;
       position: relative;
       overflow: hidden;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
     .preview-avatar {
-      width: 72px;
-      height: 72px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
-      background: #2b2420;
+      background: #2b221d;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.8rem;
-      font-weight: 700;
+      font-size: 2rem;
+      font-weight: 800;
       color: var(--accent);
       margin-bottom: 12px;
       border: 2px solid var(--accent);
-      box-shadow: 0 0 16px rgba(219, 115, 84, 0.3);
-      transition: all 0.2s;
+      transition: all 0.25s ease;
+      position: relative;
     }
     .preview-name {
-      font-size: 1.15rem;
-      font-weight: 700;
+      font-size: 1.2rem;
+      font-weight: 800;
       margin: 0 0 6px;
       color: #fff;
-      transition: color 0.2s;
+      transition: all 0.25s ease;
     }
-    .preview-badge-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    /* VIP Badge element */
     .vip-badge {
       display: inline-flex;
       align-items: center;
@@ -439,74 +439,63 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       font-weight: 800;
       letter-spacing: 0.05em;
       box-shadow: 0 1px 6px rgba(0,0,0,0.3);
-      transition: all 0.2s;
+      transition: all 0.25s ease;
     }
 
-    /* List of VIPs */
-    .list-section h2 {
-      font-size: 1.15rem;
-      margin: 0 0 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    /* VIP List */
     ul.vip-list {
       list-style: none;
       margin: 0;
       padding: 0;
       display: grid;
-      gap: 10px;
+      gap: 12px;
     }
     .vip-item {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px;
+      padding: 16px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      transition: all 0.2s;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .vip-info { min-width: 0; display: grid; gap: 4px; }
+    .vip-avatar-mini {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #29221d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--accent);
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      transition: all 0.25s;
+    }
+    .vip-info { min-width: 0; flex: 1; display: grid; gap: 4px; }
     .vip-name-row {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
     }
-    .vip-name { font-size: 0.98rem; color: #fff; }
-    .vip-sub {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    code.vip-id {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      overflow-wrap: anywhere;
-    }
+    .vip-name { font-size: 1rem; color: #fff; }
+    .vip-sub { display: flex; align-items: center; gap: 6px; }
+    code.vip-id { font-size: 0.75rem; color: var(--text-muted); overflow-wrap: anywhere; }
     .btn-copy-id {
       background: transparent;
       border: 0;
       color: var(--text-muted);
       cursor: pointer;
       padding: 2px 4px;
-      font-size: 0.75rem;
     }
     .btn-copy-id:hover { color: var(--accent); }
-    .vip-style-preview {
-      margin-top: 2px;
-    }
-    .vip-style-preview code {
-      font-size: 0.72rem;
-      color: #8c827a;
-    }
-    .vip-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
+    .vip-actions { display: flex; gap: 8px; align-items: center; }
     .btn-edit {
       background: var(--surface-2);
       color: var(--text);
@@ -514,12 +503,12 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       border-radius: 8px;
       padding: 7px 12px;
       font-size: 0.8rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
     }
     .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
     .btn-del {
-      background: #33171a;
+      background: #311518;
       color: #ff9a9a;
       border: 1px solid #4a1f24;
       border-radius: 8px;
@@ -532,79 +521,85 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
 <body>
   <main>
     <header class="hero">
-      <h1><i class="fas fa-crown"></i> VIP & Custom Card Manager</h1>
-      <p>Atur title spesial, icon badge, dan custom card styling untuk member VIP Eberardos.</p>
+      <h1><i class="fas fa-gem"></i> VIP & Custom Card Architect</h1>
+      <p>Kreasikan bentuk kartu profil, avatar kustom, title spesial, dan efek visual eksklusif member VIP.</p>
     </header>
 
     ${msg ? `<div class="msg ${isError ? "err" : "ok"}">${d(msg)}</div>` : ""}
 
-    <!-- Guide & AI Prompt Generator -->
-    <section class="guide-card">
-      <div class="guide-head">
-        <div class="guide-title"><i class="fas fa-wand-magic-sparkles"></i> Langkah Bikin Custom Card dengan AI</div>
-        <button type="button" class="btn-copy-prompt" id="btnCopyPrompt" onclick="copyPrompt()">
-          <i class="fas fa-copy"></i> Salin Prompt AI
+    <!-- Step-by-Step AI Prompt Generator -->
+    <section class="ai-guide-box">
+      <div class="ai-guide-head">
+        <div class="ai-guide-title"><i class="fas fa-wand-magic-sparkles"></i> Generator Prompt AI Struktur Baku</div>
+        <button type="button" class="btn-copy-ai" id="btnCopyPrompt" onclick="copyPrompt()">
+          <i class="fas fa-copy"></i> Salin Prompt AI (Siap Kirim)
         </button>
       </div>
-      <div class="steps-list">
-        <div class="step-item">
-          <span class="step-num">1</span>
-          <span>Klik tombol <strong>"Salin Prompt AI"</strong> di atas.</span>
+
+      <div class="ai-steps">
+        <div class="step-card">
+          <span class="step-badge">1</span>
+          <div><strong>Salin Prompt</strong><br>Klik tombol di atas untuk copy format prompt baku.</div>
         </div>
-        <div class="step-item">
-          <span class="step-num">2</span>
-          <span>Buka chatbot AI (ChatGPT / Claude / Gemini / DeepSeek), paste prompt tersebut & tentukan tema yang kamu inginkan (misal: <em>Cyberpunk Neon</em> atau <em>Royal Gold</em>).</span>
+        <div class="step-card">
+          <span class="step-badge">2</span>
+          <div><strong>Kirim ke AI Chatbot</strong><br>Paste ke ChatGPT/Claude/Gemini & tentukan temamu.</div>
         </div>
-        <div class="step-item">
-          <span class="step-num">3</span>
-          <span>Salin output JSON teratur dari chatbot AI tersebut.</span>
+        <div class="step-card">
+          <span class="step-badge">3</span>
+          <div><strong>Dapatkan Pure JSON</strong><br>AI akan langsung output JSON teratur tanpa chit-chat.</div>
         </div>
-        <div class="step-item">
-          <span class="step-num">4</span>
-          <span>Tempel di kolom <strong>"Custom Card & Badge Style"</strong> di bawah, cek Live Preview, lalu klik <strong>"Simpan VIP"</strong>!</span>
+        <div class="step-card">
+          <span class="step-badge">4</span>
+          <div><strong>Paste & Simpan</strong><br>Paste ke form, amati live shape card, lalu simpan!</div>
         </div>
       </div>
-      <div class="prompt-box" id="promptText">${d(defaultPrompt)}</div>
+
+      <div class="prompt-preview-wrap" id="promptText">${d(strictAiPrompt)}</div>
     </section>
 
     <!-- Quick Presets -->
-    <section class="presets-wrap">
-      <div class="presets-label"><i class="fas fa-bolt"></i> Pilihan Preset Cepat (Klik untuk Pasang)</div>
-      <div class="presets-grid">
-        <button type="button" class="preset-pill" onclick="applyPreset('gold')">👑 Royal Gold</button>
-        <button type="button" class="preset-pill" onclick="applyPreset('cyber')">⚡ Cyber Neon</button>
-        <button type="button" class="preset-pill" onclick="applyPreset('crimson')">🩸 Dark Crimson</button>
-        <button type="button" class="preset-pill" onclick="applyPreset('aurora')">🔮 Cosmic Aurora</button>
-        <button type="button" class="preset-pill" onclick="applyPreset('matrix')">💎 Emerald Matrix</button>
-        <button type="button" class="preset-pill" onclick="applyPreset('shadow')">💀 Shadow Obsidian</button>
+    <section class="presets-section">
+      <div class="presets-title"><i class="fas fa-bolt"></i> Preset Bentuk Kartu Fisik & Tema Eksotis</div>
+      <div class="presets-list">
+        <button type="button" class="preset-card-btn" onclick="applyPreset('mecha')">⚡ Cyber Mecha (Chamfer Card + Hexagon Avatar)</button>
+        <button type="button" class="preset-card-btn" onclick="applyPreset('sovereign')">👑 Royal Sovereign (Arch Crest + Gold Halo)</button>
+        <button type="button" class="preset-card-btn" onclick="applyPreset('crimson')">🩸 Blood Void (Slice Edge + Crimson Aura)</button>
+        <button type="button" class="preset-card-btn" onclick="applyPreset('hologram')">🔮 Void Hologram (Glass Prism + Violet Pulse)</button>
+        <button type="button" class="preset-card-btn" onclick="applyPreset('terminal')">💎 Matrix Terminal (HUD Cutout + Monospace)</button>
+        <button type="button" class="preset-card-btn" onclick="applyPreset('stealth')">💀 Obsidian Armor (Asymmetric Carbon Shield)</button>
       </div>
     </section>
 
     <!-- Workspace: Form + Live Preview -->
-    <div class="workspace-grid">
-      <section class="form-panel">
+    <div class="workspace">
+      <section class="panel">
         <h2><i class="fas fa-sliders"></i> Atur Member VIP</h2>
         <form id="vipForm" method="get">
           <input type="hidden" name="key" value="${d(key)}">
-          <div class="field">
+          
+          <div class="form-group">
             <label for="inputAdd">User ID (UUID)</label>
             <input id="inputAdd" name="add" placeholder="e3fe4a8e-e4d4-422f-bae3-8d5ac822270c" required pattern="[0-9a-fA-F-]{36}" autocomplete="off">
           </div>
-          <div class="field">
+          
+          <div class="form-group">
             <label for="inputTitle">Custom Title</label>
-            <input id="inputTitle" name="title" placeholder="ADMIN / VIP OWNER / CYBER LORD" maxlength="32" oninput="updatePreview()">
+            <input id="inputTitle" name="title" placeholder="CYBER LORD / ROYAL GOLD / VOID EMPEROR" maxlength="32" oninput="updateLivePreview()">
           </div>
-          <div class="field">
-            <label for="inputStyle">Custom Card & Badge Style (JSON dari AI atau CSS inline)</label>
-            <textarea id="inputStyle" name="style" placeholder='{"badgeStyle":"background: linear-gradient(135deg, #00f2fe, #4facfe); color:#000;","cardStyle":"background: #1a1625; border: 1px solid #7928ca;","icon":"fa-crown"}' oninput="updatePreview()"></textarea>
+          
+          <div class="form-group">
+            <label for="inputStyle">Struktur Styling Card (JSON AI atau CSS)</label>
+            <textarea id="inputStyle" name="style" placeholder='{"title":"CYBER LORD","icon":"fa-bolt","cardStyle":"clip-path: polygon(...); background: ...;","avatarStyle":"clip-path: polygon(...); border: ...;","nameStyle":"color: ...;","badgeStyle":"background: ...;"}' oninput="updateLivePreview()"></textarea>
           </div>
-          <button type="submit" class="submit-btn"><i class="fas fa-check"></i> Simpan VIP</button>
+
+          <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Simpan VIP</button>
         </form>
       </section>
 
-      <section class="preview-panel">
-        <h2><i class="fas fa-eye"></i> Live Card Preview</h2>
-        <div class="preview-card-wrap" id="previewCardWrap">
+      <section class="panel">
+        <h2><i class="fas fa-eye"></i> Live Shape & Card Preview</h2>
+        <div class="preview-box" id="previewCardWrap">
           <div class="preview-avatar" id="previewAvatar">E</div>
           <div class="preview-name" id="previewName">Nama Member</div>
           <div class="preview-badge-row">
@@ -614,62 +609,68 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       </section>
     </div>
 
-    <!-- Active VIP List -->
-    <section class="list-section">
-      <h2><i class="fas fa-users"></i> Daftar Member VIP Aktif (${(list || []).length})</h2>
+    <!-- Active VIP Member Cards -->
+    <section class="panel" style="margin-top:20px;">
+      <h2><i class="fas fa-users"></i> Daftar Member VIP Terdaftar (${(list || []).length})</h2>
       <ul class="vip-list">
-        ${items || '<p style="color:var(--text-muted);padding:14px;background:var(--surface);border-radius:var(--radius);">Belum ada member VIP terdaftar.</p>'}
+        ${items || '<p style="color:var(--text-muted);padding:12px;background:#141110;border-radius:10px;">Belum ada member VIP terdaftar.</p>'}
       </ul>
     </section>
   </main>
 
   <script>
     const PRESETS = {
-      gold: {
-        title: "ROYAL GOLD",
-        icon: "fa-crown",
-        nameColor: "#fadc8c",
-        badgeStyle: "background: linear-gradient(135deg, #ffd700, #ff9900); color: #1a0f00; font-weight: 800; box-shadow: 0 0 12px rgba(255, 215, 0, 0.45);",
-        cardStyle: "background: linear-gradient(145deg, #241d13, #16120b); border: 1px solid #d4af37; box-shadow: 0 8px 26px rgba(212, 175, 55, 0.2);"
-      },
-      cyber: {
-        title: "CYBER LORD",
+      mecha: {
+        title: "CYBER MECHA",
         icon: "fa-bolt",
-        nameColor: "#00f2fe",
-        badgeStyle: "background: linear-gradient(135deg, #00f2fe, #4facfe); color: #02131e; font-weight: 800; box-shadow: 0 0 12px rgba(0, 242, 254, 0.5);",
-        cardStyle: "background: linear-gradient(145deg, #0c1824, #060e17); border: 1px solid #00f2fe; box-shadow: 0 8px 26px rgba(0, 242, 254, 0.25);"
+        cardStyle: "background: linear-gradient(135deg, #09131f 0%, #03080e 100%); border: 1px solid #00f2fe; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); box-shadow: 0 0 25px rgba(0, 242, 254, 0.35), inset 0 0 15px rgba(0, 242, 254, 0.1);",
+        avatarStyle: "clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); border: 2px solid #00f2fe; filter: drop-shadow(0 0 10px #00f2fe); border-radius: 0;",
+        nameStyle: "background: linear-gradient(90deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; letter-spacing: 0.05em;",
+        badgeStyle: "background: #00f2fe; color: #02111a; font-weight: 900; letter-spacing: 0.08em; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); box-shadow: 0 0 14px rgba(0, 242, 254, 0.6);"
+      },
+      sovereign: {
+        title: "ROYAL SOVEREIGN",
+        icon: "fa-crown",
+        cardStyle: "background: radial-gradient(circle at 50% 0%, #2e2311 0%, #151008 100%); border: 2px solid #dfb15b; border-radius: 28px 28px 12px 12px; box-shadow: 0 12px 35px rgba(223, 177, 91, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);",
+        avatarStyle: "border-radius: 50%; border: 3px solid #dfb15b; box-shadow: 0 0 20px rgba(223, 177, 91, 0.6); padding: 3px; background: #1a140a;",
+        nameStyle: "color: #ffd700; text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5); font-weight: 800; letter-spacing: 0.04em;",
+        badgeStyle: "background: linear-gradient(135deg, #ffd700, #b8860b); color: #211500; font-weight: 800; border: 1px solid #fff; box-shadow: 0 2px 12px rgba(255, 215, 0, 0.5);"
       },
       crimson: {
-        title: "DARK CRIMSON",
+        title: "BLOOD VOID",
         icon: "fa-fire",
-        nameColor: "#ff7b89",
-        badgeStyle: "background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #1f0408; font-weight: 800; box-shadow: 0 0 12px rgba(255, 65, 108, 0.5);",
-        cardStyle: "background: linear-gradient(145deg, #240e12, #14070a); border: 1px solid #ff416c; box-shadow: 0 8px 26px rgba(255, 65, 108, 0.25);"
+        cardStyle: "background: linear-gradient(145deg, #22080a, #100204); border-left: 4px solid #ff1a35; border-right: 1px solid #520e14; border-top: 1px solid #520e14; border-bottom: 1px solid #520e14; border-radius: 8px 24px 8px 24px; box-shadow: 0 8px 30px rgba(255, 26, 53, 0.3);",
+        avatarStyle: "border-radius: 18px; border: 2px solid #ff1a35; box-shadow: 0 0 18px rgba(255, 26, 53, 0.5);",
+        nameStyle: "color: #ff4d63; text-shadow: 0 0 12px rgba(255, 26, 53, 0.6); font-weight: 800;",
+        badgeStyle: "background: linear-gradient(135deg, #ff1a35, #80000e); color: #fff; font-weight: 800; box-shadow: 0 0 12px rgba(255, 26, 53, 0.6);"
       },
-      aurora: {
-        title: "COSMIC VIP",
+      hologram: {
+        title: "VOID HOLOGRAM",
         icon: "fa-wand-magic-sparkles",
-        nameColor: "#d394ff",
-        badgeStyle: "background: linear-gradient(135deg, #b224ef, #7579ff); color: #160424; font-weight: 800; box-shadow: 0 0 12px rgba(178, 36, 239, 0.45);",
-        cardStyle: "background: linear-gradient(145deg, #1b1226, #100a18); border: 1px solid #b224ef; box-shadow: 0 8px 26px rgba(178, 36, 239, 0.25);"
+        cardStyle: "background: rgba(28, 18, 43, 0.8); backdrop-filter: blur(16px); border: 1px solid rgba(186, 104, 255, 0.4); border-radius: 24px; box-shadow: 0 8px 32px rgba(138, 43, 226, 0.35), inset 0 0 20px rgba(186, 104, 255, 0.15);",
+        avatarStyle: "border-radius: 50%; border: 2px dashed #ba68ff; box-shadow: 0 0 20px rgba(186, 104, 255, 0.5);",
+        nameStyle: "background: linear-gradient(90deg, #e0aaff, #ba68ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;",
+        badgeStyle: "background: linear-gradient(135deg, #ba68ff, #7928ca); color: #fff; font-weight: 800; box-shadow: 0 0 15px rgba(186, 104, 255, 0.5);"
       },
-      matrix: {
-        title: "EMERALD ELITE",
-        icon: "fa-gem",
-        nameColor: "#68f0aa",
-        badgeStyle: "background: linear-gradient(135deg, #0ba360, #3cba92); color: #021c10; font-weight: 800; box-shadow: 0 0 12px rgba(11, 163, 96, 0.45);",
-        cardStyle: "background: linear-gradient(145deg, #0d1e15, #08140e); border: 1px solid #3cba92; box-shadow: 0 8px 26px rgba(60, 186, 146, 0.25);"
+      terminal: {
+        title: "MATRIX HUD",
+        icon: "fa-crosshairs",
+        cardStyle: "background: #021208; border: 1px solid #00ff66; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); box-shadow: 0 0 20px rgba(0, 255, 102, 0.25), inset 0 0 12px rgba(0, 255, 102, 0.1);",
+        avatarStyle: "clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); border: 2px solid #00ff66; filter: drop-shadow(0 0 8px #00ff66); border-radius: 0;",
+        nameStyle: "color: #00ff66; font-family: monospace; text-shadow: 0 0 8px #00ff66; font-weight: 700; letter-spacing: 0.1em;",
+        badgeStyle: "background: #00ff66; color: #011408; font-family: monospace; font-weight: 900; letter-spacing: 0.1em; box-shadow: 0 0 10px #00ff66;"
       },
-      shadow: {
-        title: "OBSIDIAN",
+      stealth: {
+        title: "OBSIDIAN ARMOR",
         icon: "fa-skull",
-        nameColor: "#d0c9c0",
-        badgeStyle: "background: linear-gradient(135deg, #484848, #202020); color: #fff; border: 1px solid #666; font-weight: 800; box-shadow: 0 0 8px rgba(255,255,255,0.15);",
-        cardStyle: "background: linear-gradient(145deg, #1f1b19, #110f0e); border: 1px solid #4a423e; box-shadow: 0 8px 26px rgba(0,0,0,0.5);"
+        cardStyle: "background: linear-gradient(160deg, #18181b 0%, #09090b 100%); border: 1px solid #3f3f46; border-radius: 4px 28px 4px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.05);",
+        avatarStyle: "border-radius: 4px 18px 4px 18px; border: 2px solid #71717a; box-shadow: 0 0 15px rgba(255,255,255,0.15);",
+        nameStyle: "color: #fafafa; font-weight: 800; letter-spacing: 0.06em;",
+        badgeStyle: "background: #27272a; color: #f4f4f5; border: 1px solid #52525b; font-weight: 800; box-shadow: 0 0 8px rgba(0,0,0,0.5);"
       }
     };
 
-    function updatePreview() {
+    function updateLivePreview() {
       const titleInput = document.getElementById("inputTitle");
       const styleInput = document.getElementById("inputStyle");
       const titleText = (titleInput.value || "ADMIN").trim().toUpperCase();
@@ -684,7 +685,7 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
 
       titleEl.textContent = titleText;
 
-      // Reset style bawaan
+      // Reset
       card.removeAttribute("style");
       badge.removeAttribute("style");
       name.removeAttribute("style");
@@ -696,8 +697,9 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       try {
         const j = JSON.parse(styleVal);
         if (j.cardStyle) card.setAttribute("style", j.cardStyle);
+        if (j.avatarStyle) avatar.setAttribute("style", j.avatarStyle);
+        if (j.nameStyle) name.setAttribute("style", j.nameStyle);
         if (j.badgeStyle) badge.setAttribute("style", j.badgeStyle);
-        if (j.nameColor) name.style.color = j.nameColor;
         if (j.icon) {
           const rawIcon = j.icon.replace(/^fa[srb]?\s+/, "");
           icon.className = "fas " + rawIcon;
@@ -714,24 +716,25 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       document.getElementById("inputStyle").value = JSON.stringify({
         title: p.title,
         icon: p.icon,
-        nameColor: p.nameColor,
-        badgeStyle: p.badgeStyle,
-        cardStyle: p.cardStyle
+        cardStyle: p.cardStyle,
+        avatarStyle: p.avatarStyle,
+        nameStyle: p.nameStyle,
+        badgeStyle: p.badgeStyle
       }, null, 2);
-      updatePreview();
+      updateLivePreview();
     }
 
     function editVip(id, title, rawStyle) {
       document.getElementById("inputAdd").value = id;
       document.getElementById("inputTitle").value = title;
       document.getElementById("inputStyle").value = rawStyle;
-      updatePreview();
+      updateLivePreview();
       document.getElementById("inputTitle").focus();
     }
 
     function copyText(str) {
       navigator.clipboard.writeText(str).then(() => {
-        alert("User ID berhasil disalin: " + str);
+        alert("ID tersalin: " + str);
       });
     }
 
@@ -740,13 +743,12 @@ Tema yang diinginkan: [SEBUTKAN TEMA DISINI, contoh: Cyberpunk Neon / Royal Luxu
       navigator.clipboard.writeText(txt).then(() => {
         const btn = document.getElementById("btnCopyPrompt");
         const prev = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> Tersalin!';
-        setTimeout(() => { btn.innerHTML = prev; }, 2000);
+        btn.innerHTML = '<i class="fas fa-check"></i> Tersalin! Kirim ke AI';
+        setTimeout(() => { btn.innerHTML = prev; }, 2500);
       });
     }
 
-    // Inisialisasi awal
-    updatePreview();
+    updateLivePreview();
   </script>
 </body>
 </html>`;
@@ -764,7 +766,7 @@ async function R(a, n, t) {
   const p = (t.searchParams.get("add") || "").trim();
   const l = (t.searchParams.get("remove") || "").trim();
   const u = (t.searchParams.get("title") || "").trim().slice(0, 32) || "ADMIN";
-  const style = (t.searchParams.get("style") || "").trim().slice(0, 2000);
+  const style = (t.searchParams.get("style") || "").trim().slice(0, 4000);
   const g = p ? "add" : l ? "remove" : "list";
   const c = p || l || null;
 
@@ -777,7 +779,6 @@ async function R(a, n, t) {
     const { url: s, key: m } = await P(a, n);
     if (!s || !m) return r(h(e, [], "Konfigurasi Supabase gak ketemu.", true), 500);
 
-    // Coba kirim dengan parameter p_style terlebih dahulu
     const payload = { p_key: e, p_action: g, p_user: c, p_title: u, p_style: style || null };
     f = await fetch(s.replace(/\/$/, "") + "/rest/v1/rpc/vip_manage", {
       method: "POST",
@@ -786,7 +787,6 @@ async function R(a, n, t) {
     });
     i = await f.json().catch(() => null);
 
-    // Jika Supabase masih memakai fungsi lama yang belum punya p_style (PGRST202 / 42883)
     if (!f.ok && (i?.code === "PGRST202" || i?.code === "42883")) {
       f = await fetch(s.replace(/\/$/, "") + "/rest/v1/rpc/vip_manage", {
         method: "POST",
@@ -810,7 +810,7 @@ async function R(a, n, t) {
   const y = Array.isArray(i) ? i : [];
   const x = y.find((s) => s.id === c);
   const w = g === "add"
-    ? `${x?.name || c} sekarang punya title ${u.toUpperCase()}${style ? " & Custom Card Style" : ""}.`
+    ? `${x?.name || c} sekarang punya title ${u.toUpperCase()}${style ? " & Custom Card Shape" : ""}.`
     : g === "remove"
       ? `VIP ${c} udah dihapus.`
       : "";
