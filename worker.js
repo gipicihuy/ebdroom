@@ -54,19 +54,34 @@ async function P(a,n){
   return{url:o.SUPABASE_URL,key:o.SUPABASE_ANON_KEY};
 }
 
+function extractKeyframes(css) {
+  if (!css || typeof css !== "string") return { inlineCss: "", keyframes: "" };
+  const kfRegex = /@keyframes\s+[^{]+{(?:[^{}]*|\{[^{}]*\})*}/gi;
+  const matches = css.match(kfRegex) || [];
+  const inlineCss = css.replace(kfRegex, "").trim();
+  return { inlineCss, keyframes: matches.join("\n") };
+}
+
 function parseStyleConfig(raw) {
-  if (!raw) return { badgeStyle: "", cardStyle: "", avatarStyle: "", nameStyle: "", icon: "fa-shield-halved" };
+  if (!raw) return { badgeStyle: "", cardStyle: "", avatarStyle: "", nameStyle: "", icon: "fa-shield-halved", keyframes: "" };
   try {
     const j = JSON.parse(raw);
+    const cExt = extractKeyframes(j.cardStyle);
+    const aExt = extractKeyframes(j.avatarStyle);
+    const nExt = extractKeyframes(j.nameStyle);
+    const bExt = extractKeyframes(j.badgeStyle);
+
     return {
-      badgeStyle: j.badgeStyle || "",
-      cardStyle: j.cardStyle || "",
-      avatarStyle: j.avatarStyle || "",
-      nameStyle: j.nameStyle || "",
-      icon: j.icon || "fa-shield-halved"
+      badgeStyle: bExt.inlineCss,
+      cardStyle: cExt.inlineCss,
+      avatarStyle: aExt.inlineCss,
+      nameStyle: nExt.inlineCss,
+      icon: j.icon || "fa-shield-halved",
+      keyframes: [cExt.keyframes, aExt.keyframes, nExt.keyframes, bExt.keyframes].filter(Boolean).join("\n")
     };
   } catch {
-    return { badgeStyle: raw, cardStyle: "", avatarStyle: "", nameStyle: "", icon: "fa-shield-halved" };
+    const ext = extractKeyframes(raw);
+    return { badgeStyle: ext.inlineCss, cardStyle: "", avatarStyle: "", nameStyle: "", icon: "fa-shield-halved", keyframes: ext.keyframes };
   }
 }
 
@@ -98,14 +113,15 @@ Panduan Bentukan Fisik:
 
 Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Royal Golden Emperor / Void Dark Matter / Blood Moon Vampire / Glitch Cyber Hacker / Cosmic Astral Prism]`;
 
+  let pageKeyframes = "";
   const items = (list || []).map((e) => {
     const s = parseStyleConfig(e.style);
+    if (s.keyframes) pageKeyframes += s.keyframes + "\n";
     const badgeAttr = s.badgeStyle ? `style="${d(s.badgeStyle)}"` : "";
     const cardAttr = s.cardStyle ? `style="${d(s.cardStyle)}"` : "";
     const avatarAttr = s.avatarStyle ? `style="${d(s.avatarStyle)}"` : "";
     const nameAttr = s.nameStyle ? `style="${d(s.nameStyle)}"` : "";
     const iconClass = d(s.icon || "fa-shield-halved");
-    const safeStyleJson = d(e.style || "");
 
     return `<li class="vip-item" ${cardAttr}>
       <div class="vip-avatar-mini" ${avatarAttr}><i class="fas fa-user"></i></div>
@@ -120,8 +136,8 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
         </div>
       </div>
       <div class="vip-actions">
-        <button type="button" class="btn-edit" onclick="editVip('${d(e.id)}', '${d(e.title || "ADMIN")}', '${safeStyleJson}')"><i class="fas fa-pen"></i> Edit</button>
-        <form method="get" onsubmit="return confirm('Hapus VIP user ini?')">
+        <button type="button" class="btn-edit" onclick="editVip('${d(e.id)}')"><i class="fas fa-pen"></i> Edit</button>
+        <form method="post" action="?key=${d(key)}" onsubmit="return confirm('Hapus VIP user ini?')">
           <input type="hidden" name="key" value="${d(key)}">
           <input type="hidden" name="remove" value="${d(e.id)}">
           <button class="btn-del" type="submit" title="Hapus"><i class="fas fa-trash"></i></button>
@@ -129,6 +145,8 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
       </div>
     </li>`;
   }).join("");
+
+  const safeJsonStore = JSON.stringify(list || []).replace(/</g, "\\u003c");
 
   return `<!doctype html>
 <html lang="id">
@@ -579,6 +597,7 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
     }
     .btn-del:hover { background: #451b20; }
   </style>
+  ${pageKeyframes ? `<style id="serverVipKeyframes">${pageKeyframes}</style>` : ""}
 </head>
 <body>
   <main>
@@ -637,7 +656,7 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
     <div class="workspace">
       <section class="panel">
         <h2><i class="fas fa-sliders"></i> Atur Member VIP</h2>
-        <form id="vipForm" method="get">
+        <form id="vipForm" method="post" action="?key=${d(key)}">
           <input type="hidden" name="key" value="${d(key)}">
           
           <div class="form-group">
@@ -647,7 +666,7 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
           
           <div class="form-group">
             <label for="inputTitle">Custom Title</label>
-            <input id="inputTitle" name="title" placeholder="CYBER LORD / ROYAL GOLD / VOID EMPEROR" maxlength="32" oninput="updateLivePreview()">
+            <input id="inputTitle" name="title" placeholder="RAJA IBLIS / CYBER LORD / ROYAL GOLD" maxlength="32" oninput="updateLivePreview()">
           </div>
           
           <div class="form-group">
@@ -679,6 +698,8 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
       </ul>
     </section>
   </main>
+
+  <script id="vipDataStore" type="application/json">${safeJsonStore}</script>
 
   <script>
     const PRESETS = {
@@ -732,6 +753,20 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
       }
     };
 
+    let vipDataMap = new Map();
+    try {
+      const rawStore = document.getElementById("vipDataStore")?.textContent || "[]";
+      (JSON.parse(rawStore) || []).forEach(x => { if (x && x.id) vipDataMap.set(x.id, x); });
+    } catch(e) {}
+
+    function extractKeyframesJs(css) {
+      if (!css || typeof css !== "string") return { inlineCss: "", keyframes: "" };
+      const kfRegex = /@keyframes\s+[^{]+{(?:[^{}]*|\{[^{}]*\})*}/gi;
+      const matches = css.match(kfRegex) || [];
+      const inlineCss = css.replace(kfRegex, "").trim();
+      return { inlineCss, keyframes: matches.join("\n") };
+    }
+
     function updateLivePreview() {
       const titleInput = document.getElementById("inputTitle");
       const styleInput = document.getElementById("inputStyle");
@@ -744,30 +779,58 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
       const name = document.getElementById("previewName");
       const titleEl = document.getElementById("previewTitleText");
       const avatar = document.getElementById("previewAvatar");
+      
+      let styleTag = document.getElementById("previewDynamicKeyframes");
+      if (!styleTag) {
+        styleTag = document.createElement("style");
+        styleTag.id = "previewDynamicKeyframes";
+        document.head.appendChild(styleTag);
+      }
 
       titleEl.textContent = titleText;
 
-      // Reset
       card.removeAttribute("style");
       badge.removeAttribute("style");
       name.removeAttribute("style");
       avatar.removeAttribute("style");
       icon.className = "fas fa-shield-halved";
+      styleTag.textContent = "";
 
       if (!styleVal) return;
 
       try {
         const j = JSON.parse(styleVal);
-        if (j.cardStyle) card.setAttribute("style", j.cardStyle);
-        if (j.avatarStyle) avatar.setAttribute("style", j.avatarStyle);
-        if (j.nameStyle) name.setAttribute("style", j.nameStyle);
-        if (j.badgeStyle) badge.setAttribute("style", j.badgeStyle);
+        let allKeyframes = "";
+
+        if (j.cardStyle) {
+          const ext = extractKeyframesJs(j.cardStyle);
+          if (ext.inlineCss) card.setAttribute("style", ext.inlineCss);
+          if (ext.keyframes) allKeyframes += ext.keyframes + "\n";
+        }
+        if (j.avatarStyle) {
+          const ext = extractKeyframesJs(j.avatarStyle);
+          if (ext.inlineCss) avatar.setAttribute("style", ext.inlineCss);
+          if (ext.keyframes) allKeyframes += ext.keyframes + "\n";
+        }
+        if (j.nameStyle) {
+          const ext = extractKeyframesJs(j.nameStyle);
+          if (ext.inlineCss) name.setAttribute("style", ext.inlineCss);
+          if (ext.keyframes) allKeyframes += ext.keyframes + "\n";
+        }
+        if (j.badgeStyle) {
+          const ext = extractKeyframesJs(j.badgeStyle);
+          if (ext.inlineCss) badge.setAttribute("style", ext.inlineCss);
+          if (ext.keyframes) allKeyframes += ext.keyframes + "\n";
+        }
         if (j.icon) {
           const rawIcon = j.icon.replace(/^fa[srb]?\s+/, "");
           icon.className = "fas " + rawIcon;
         }
+        styleTag.textContent = allKeyframes;
       } catch {
-        badge.setAttribute("style", styleVal);
+        const ext = extractKeyframesJs(styleVal);
+        badge.setAttribute("style", ext.inlineCss);
+        styleTag.textContent = ext.keyframes;
       }
     }
 
@@ -786,12 +849,16 @@ Tema yang diinginkan: [GANTI_DENGAN_TEMA_ANDA, contoh: Cyberpunk Neon Mecha / Ro
       updateLivePreview();
     }
 
-    function editVip(id, title, rawStyle) {
-      document.getElementById("inputAdd").value = id;
-      document.getElementById("inputTitle").value = title;
-      document.getElementById("inputStyle").value = rawStyle;
+    function editVip(id) {
+      const item = vipDataMap.get(id);
+      if (!item) return;
+      document.getElementById("inputAdd").value = item.id || "";
+      document.getElementById("inputTitle").value = item.title || "ADMIN";
+      document.getElementById("inputStyle").value = item.style || "";
       updateLivePreview();
       document.getElementById("inputTitle").focus();
+      const formEl = document.getElementById("vipForm");
+      if (formEl) window.scrollTo({ top: formEl.offsetTop - 30, behavior: "smooth" });
     }
 
     function copyText(str) {
@@ -820,15 +887,38 @@ async function R(a, n, t) {
   const r = (s, m = 200) => new Response(s, { status: m, headers: v });
   const o = () => new Response("Not found", { status: 404, headers: { "cache-control": "no-store" } });
 
-  if (a.method !== "GET") return new Response("Method not allowed", { status: 405 });
+  if (a.method !== "GET" && a.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
-  const e = t.searchParams.get("key") || "";
+  let postData = {};
+  if (a.method === "POST") {
+    try {
+      const cType = a.headers.get("content-type") || "";
+      if (cType.includes("application/json")) {
+        postData = await a.json().catch(() => ({}));
+      } else {
+        const formData = await a.formData().catch(() => null);
+        if (formData) {
+          for (const [k, val] of formData.entries()) {
+            postData[k] = String(val);
+          }
+        } else {
+          const text = await a.text().catch(() => "");
+          const params = new URLSearchParams(text);
+          for (const [k, val] of params.entries()) {
+            postData[k] = val;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  const e = (postData.key || t.searchParams.get("key") || "").trim();
   if (e.length < 16) return o();
 
-  const p = (t.searchParams.get("add") || "").trim();
-  const l = (t.searchParams.get("remove") || "").trim();
-  const u = (t.searchParams.get("title") || "").trim().slice(0, 32) || "ADMIN";
-  const style = (t.searchParams.get("style") || "").trim().slice(0, 4000);
+  const p = (postData.add || t.searchParams.get("add") || "").trim();
+  const l = (postData.remove || t.searchParams.get("remove") || "").trim();
+  const u = (postData.title || t.searchParams.get("title") || "").trim().slice(0, 64) || "ADMIN";
+  const style = (postData.style || t.searchParams.get("style") || "").trim().slice(0, 50000);
   const g = p ? "add" : l ? "remove" : "list";
   const c = p || l || null;
 
