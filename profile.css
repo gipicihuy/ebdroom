@@ -47,6 +47,9 @@ body{display:block}
 .profile-field-row[hidden]{display:none}
 .profile-field-row textarea{resize:vertical;min-height:84px;line-height:1.45}
 .profile-field-row label .profile-bio-count{float:right;font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-muted)}
+.profile-name-feedback{font-size:.78rem;margin-top:2px;display:block}
+.profile-name-feedback.error{color:var(--danger);font-weight:600}
+.profile-name-feedback.success{color:var(--success);font-weight:500}
 .profile-status{text-align:center;margin:20px 16px 0;font-size:.85rem;min-height:18px;color:var(--text-secondary)}
 .profile-status.error{color:var(--danger)}
 .profile-status.success{color:var(--success)}

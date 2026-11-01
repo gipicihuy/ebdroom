@@ -38,6 +38,7 @@ const joinedField=document.getElementById("profileJoinedField");
 const saveBtn=document.getElementById("profileSaveBtn");
 const statusEl=document.getElementById("profileStatus");
 const guestOverlay=document.getElementById("profileGuestOverlay");
+const nameFeedback=document.getElementById("profileNameFeedback");
 
 let currentUser=null;
 let currentProfile=null;
@@ -50,6 +51,8 @@ let originalName="";
 let originalBio="";
 let bioSupported=!1;
 let bannerSupported=!0;
+let nameCheckTimer=null;
+let nameIsAvailable=!0;
 
 function stringToColor(e){
   if(!e)return"#4f8fb0";
@@ -98,6 +101,57 @@ function renderBanner(url, dim){
   }
 }
 
+async function checkNameAvailability(val){
+  const trimmed=(val||"").trim();
+  if(!trimmed||trimmed.toLowerCase()===originalName.toLowerCase()){
+    nameIsAvailable=!0;
+    if(nameFeedback)nameFeedback.style.display="none";
+    refreshSaveState();
+    return!0;
+  }
+  if(/[/@?#\\]/.test(trimmed)){
+    nameIsAvailable=!1;
+    if(nameFeedback){
+      nameFeedback.textContent="Nama tidak boleh memakai karakter @, /, ?, #";
+      nameFeedback.className="profile-name-feedback error";
+      nameFeedback.style.display="block";
+    }
+    refreshSaveState();
+    return!1;
+  }
+  try{
+    const{data:res,error:err}=await supabaseClient
+      .from("profiles")
+      .select("id")
+      .ilike("display_name",trimmed)
+      .neq("id",currentUser.id)
+      .limit(1);
+    if(err){nameIsAvailable=!0;return!0}
+    if(res&&res.length>0){
+      nameIsAvailable=!1;
+      if(nameFeedback){
+        nameFeedback.textContent=`Nama @${trimmed} sudah terpakai! Pilih nama lain.`;
+        nameFeedback.className="profile-name-feedback error";
+        nameFeedback.style.display="block";
+      }
+      refreshSaveState();
+      return!1;
+    }else{
+      nameIsAvailable=!0;
+      if(nameFeedback){
+        nameFeedback.textContent=`Nama @${trimmed} tersedia!`;
+        nameFeedback.className="profile-name-feedback success";
+        nameFeedback.style.display="block";
+      }
+      refreshSaveState();
+      return!0;
+    }
+  }catch{
+    nameIsAvailable=!0;
+    return!0;
+  }
+}
+
 function refreshSaveState(){
   const nameChanged = nameInput.value.trim() !== originalName;
   const bioChanged = bioSupported && bioInput.value.trim() !== originalBio;
@@ -108,7 +162,7 @@ function refreshSaveState(){
   bioCount.textContent = bioInput.value.length + "/150";
 
   const isDirty = nameChanged || bioChanged || bannerChanged || dimChanged || avatarChanged;
-  saveBtn.disabled = !currentUser || !isDirty || nameInput.value.trim().length === 0;
+  saveBtn.disabled = !currentUser || !isDirty || nameInput.value.trim().length === 0 || !nameIsAvailable;
 }
 
 function setStatus(e,t){
@@ -229,6 +283,10 @@ dimChips.forEach(chip => {
 // Avatar & text interactions
 nameInput.addEventListener("input",()=>{
   selectedAvatarFile||currentProfile?.avatar_url||renderAvatar("");
+  clearTimeout(nameCheckTimer);
+  nameCheckTimer=setTimeout(()=>{
+    checkNameAvailability(nameInput.value);
+  },350);
   refreshSaveState();
 });
 bioInput.addEventListener("input",refreshSaveState);
@@ -251,6 +309,7 @@ saveBtn.addEventListener("click",async()=>{
   if(!currentUser)return;
   const e=nameInput.value.trim();
   if(!e)return void setStatus("Nama tidak boleh kosong.","error");
+  if(!nameIsAvailable)return void setStatus("Nama tersebut sudah terpakai oleh pengguna lain.","error");
   
   saveBtn.disabled=!0;
   const t=saveBtn.textContent;

@@ -821,6 +821,9 @@ async function R(a, n, t) {
 export default {
   async fetch(a, n) {
     const t = new URL(a.url);
+    if (t.pathname.startsWith("/@")) {
+      return n.ASSETS.fetch(new Request(new URL("/", a.url), a));
+    }
     return t.pathname === "/api/upload"
       ? _(a)
       : t.pathname === "/api/vip"
