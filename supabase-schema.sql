@@ -128,3 +128,53 @@ create policy "Authenticated upload chat-avatars"
 
 -- Bio profil (maks 150 karakter). Aman dijalanin ulang.
 alter table public.profiles add column if not exists bio text check (char_length(bio) <= 150);
+
+-- VIP / title spesial per user ID. Aman dijalanin ulang.
+create table if not exists public.vip_users (
+  user_id uuid primary key,
+  title text not null default 'ADMIN' check (char_length(title) between 1 and 16),
+  created_at timestamptz default now()
+);
+alter table public.vip_users enable row level security;
+drop policy if exists "VIP viewable by everyone" on public.vip_users;
+create policy "VIP viewable by everyone" on public.vip_users for select using (true);
+-- Gak ada policy insert/update/delete: nulis cuma lewat fungsi vip_manage di bawah.
+
+create table if not exists public.app_secrets (name text primary key, value text not null);
+alter table public.app_secrets enable row level security;
+revoke all on public.app_secrets from anon, authenticated;
+insert into public.app_secrets (name, value) values ('vip_key', 'GANTI_KEY_RAHASIA')
+  on conflict (name) do update set value = excluded.value;
+
+create or replace function public.vip_manage(p_key text, p_action text, p_user uuid default null, p_title text default 'ADMIN')
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_key is null or not exists (select 1 from app_secrets where name = 'vip_key' and value = p_key) then
+    raise exception 'unauthorized' using errcode = '42501';
+  end if;
+  if p_action = 'add' then
+    if p_user is null then raise exception 'user id kosong' using errcode = '22023'; end if;
+    insert into vip_users (user_id, title) values (p_user, upper(coalesce(nullif(trim(p_title), ''), 'ADMIN')))
+      on conflict (user_id) do update set title = excluded.title;
+  elsif p_action = 'remove' then
+    delete from vip_users where user_id = p_user;
+  elsif p_action <> 'list' then
+    raise exception 'aksi gak dikenal' using errcode = '22023';
+  end if;
+  return (
+    select coalesce(jsonb_agg(jsonb_build_object('id', v.user_id, 'title', v.title, 'name', p.display_name) order by v.created_at), '[]'::jsonb)
+    from vip_users v left join profiles p on p.id = v.user_id
+  );
+end;
+$$;
+revoke all on function public.vip_manage(text, text, uuid, text) from public;
+grant execute on function public.vip_manage(text, text, uuid, text) to anon, authenticated;
+
+insert into public.vip_users (user_id, title) values
+  ('e3fe4a8e-e4d4-422f-bae3-8d5ac822270c', 'ADMIN'),
+  ('a48d2c9c-c5b0-446a-bdae-cb5c17b49b07', 'ADMIN')
+on conflict (user_id) do nothing;
