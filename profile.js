@@ -343,8 +343,8 @@ if (btnUploadSong && songFileInput) {
     if (!file.type.startsWith("audio/") && !/\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(file.name)) {
       return void setStatus("Hanya file audio (MP3, WAV, M4A, OGG) yang diizinkan!", "error");
     }
-    if (file.size > 26214400) {
-      return void setStatus("Ukuran audio maksimal 25MB!", "error");
+    if (file.size > 104857600) {
+      return void setStatus("Ukuran audio maksimal 100MB!", "error");
     }
     selectedSongFile = file;
     currentSongUrl = "blob:" + file.name;

@@ -1,13 +1,13 @@
-const S="https://cdn.zass.in/upload",U=52428800,b={zass:"https://cdn.zass.in"},A="https://athars.space";
+const S="https://cdn.zass.in/upload",U=104857600,b={zass:"https://cdn.zass.in"},A="https://athars.space";
 
 async function _(a){
   if(a.method!=="POST")return new Response("Method not allowed",{status:405});
   const n=a.headers.get("content-type")||"";
   if(!n.includes("multipart/form-data"))return new Response("Invalid content type",{status:400});
-  if(Number(a.headers.get("content-length")||0)>52428800)return new Response("File too large",{status:413});
+  if(Number(a.headers.get("content-length")||0)>U)return new Response("File too large",{status:413});
   try{
     const t=await a.arrayBuffer();
-    if(t.byteLength>52428800)return new Response("File too large",{status:413});
+    if(t.byteLength>U)return new Response("File too large",{status:413});
     const r=await fetch(S,{method:"POST",headers:{"content-type":n,accept:"application/json"},body:t}),o=await r.text();
     let e;
     try{e=JSON.parse(o)}catch{}
