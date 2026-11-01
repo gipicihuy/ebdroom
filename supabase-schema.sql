@@ -150,6 +150,10 @@ revoke all on public.app_secrets from anon, authenticated;
 insert into public.app_secrets (name, value) values ('vip_key', 'GANTI_KEY_RAHASIA')
   on conflict (name) do update set value = excluded.value;
 
+-- Drop function lama dulu agar Postgres mengizinkan penambahan default parameter baru
+drop function if exists public.vip_manage(text, text, uuid, text);
+drop function if exists public.vip_manage(text, text, uuid, text, text);
+
 create or replace function public.vip_manage(
   p_key text,
   p_action text,
